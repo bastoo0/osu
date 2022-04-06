@@ -36,14 +36,14 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             misses = score.Statistics.GetValueOrDefault(HitResult.Miss);
 
             // We are heavily relying on aim in catch the beat
-            double value = Math.Pow(5.0 * Math.Max(1.0, catchAttributes.StarRating / 0.0049) - 4.0, 2.0) / 150000.0;
+            double value = Math.Pow(5.0 * Math.Max(1.0, catchAttributes.StarRating / 0.0049) - 4.0, 2.0) / 170000.0;
 
             // Longer maps are worth more. "Longer" means how many hits there are which can contribute to combo
             int numTotalHits = totalComboHits();
 
             // Longer maps are worth more
             double lengthFactor = numTotalHits * 0.5 + catchAttributes.DirectionChangeCount;
-            double lengthBonus = Math.Log10(lengthFactor + 315) - 1.5 - 0.08 * Math.Min(1.0, lengthFactor / 2000);
+            double lengthBonus = Math.Log10(lengthFactor + 315) - 1.5 - 0.12 * Math.Min(1.0, lengthFactor / 2000);
 
             // Longer maps are worth more
             value *= lengthBonus;
@@ -87,12 +87,12 @@ namespace osu.Game.Rulesets.Catch.Difficulty
                 if (approachRate > 8.0f)
                     value *= 0.18f * (approachRate - 8.0f) + 1; // 18% for each AR above 8
 
-                if (approachRate <= 8.0f)
+                if (approachRate <= 8.0f && !score.Mods.Any(m => m is ModHidden))
                     value *= (0.019f * approachRate) + 0.85f; // Dreasing by a few percentages below AR 8
             }
 
             // Scale the aim value with accuracy _slightly_
-            value *= Math.Pow(accuracy(), 5.9);
+            value *= Math.Pow(accuracy(), 5.8);
 
             if (score.Mods.Any(m => m is ModNoFail))
                 value *= Math.Max(0.90, 1.0 - 0.02 * misses);
