@@ -36,7 +36,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             misses = score.Statistics.GetValueOrDefault(HitResult.Miss);
 
             // We are heavily relying on aim in catch the beat
-            double value = Math.Pow(5.0 * Math.Max(1.0, catchAttributes.StarRating / 0.0049) - 4.0, 2.1) / 320000.0;
+            double value = Math.Pow(5.0 * Math.Max(1.0, catchAttributes.StarRating / 0.0049) - 4.0, 2.1) / 340000.0;
 
             // Longer maps are worth more. "Longer" means how many hits there are which can contribute to combo
             int numTotalHits = totalComboHits();
@@ -62,8 +62,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
                 approachRateFactor += 0.08 * (approachRate - 9.0); // 8% for each AR above 9
             if (approachRate > 10.0)
                 approachRateFactor += 0.30 * (approachRate - 10.0); // Additional 30% at AR 11
-            else if (approachRate < 8.0)
-                approachRateFactor -= 0.025 * (8.0 - approachRate); // removing 2.5% for each AR below 8
+
 
             value *= approachRateFactor;
 
