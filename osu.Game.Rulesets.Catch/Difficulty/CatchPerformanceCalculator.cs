@@ -61,7 +61,10 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             if (approachRate > 9.0)
                 approachRateFactor += 0.08 * (approachRate - 9.0); // 8% for each AR above 9
             if (approachRate > 10.0)
-                approachRateFactor += 0.30 * (approachRate - 10.0); // Additional 30% at AR 11
+                approachRateFactor += 0.40 * (approachRate - 10.0); // Additional 40% at AR 11
+
+            if (approachRate < 9.0)
+                value *= 1 + 0.01 * (9.0 - approachRate); // Additional 1% for each AR below 9
 
 
             value *= approachRateFactor;
@@ -75,13 +78,13 @@ namespace osu.Game.Rulesets.Catch.Difficulty
                     value *= 1 + 0.04 * (11.0 - Math.Min(11.0, approachRate)); // 4% at AR 10, 1% at AR 11
 
                 if (approachRate < 9.0)
-                    value *= 1 + 0.045 * (9.0 - approachRate); // Additional 4.5% for each AR below 9
+                    value *= 1 + 0.03 * (9.0 - approachRate); // Additional 3% for each AR below 9
             }
 
             if (score.Mods.Any(m => m is ModFlashlight))
             {
                 // Apply length bonus again if flashlight is on simply because it becomes a lot harder on longer maps.
-                value *= Math.Pow(lengthBonus, 0.7);
+                value *= Math.Pow(lengthBonus, 0.85);
 
                 if (approachRate > 8.0f)
                     value *= 0.18f * (approachRate - 8.0f) + 1; // 18% for each AR above 8
