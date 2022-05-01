@@ -58,11 +58,11 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 
             double approachRate = catchAttributes.ApproachRate;
             double circleSize = score.BeatmapInfo.Difficulty.CircleSize;
-            double approachRateFactor = 1.0 + Math.Pow(circleSize, 2.5) * Math.Pow(approachRate, 1.5) / 23000;
+            double approachRateFactor = 1.0 + Math.Pow(circleSize, 2) * Math.Pow(approachRate, 1.5) / 4800;
             if (approachRate > 9.0)
                 approachRateFactor += 0.08 * (approachRate - 9.0); // 8% for each AR above 9
             if (approachRate > 10.0)
-                approachRateFactor += 0.40 * (approachRate - 10.0); // Additional 40% at AR 11
+                approachRateFactor += 0.45 * (approachRate - 10.0); // Additional 45% at AR 11
 
             if (approachRate < 9.0)
                 value *= 1 + 0.01 * (9.0 - approachRate); // Additional 1% for each AR below 9
