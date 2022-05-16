@@ -43,7 +43,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 
             // Longer maps are worth more
             double lengthFactor = numTotalHits * 0.5 + catchAttributes.DirectionChangeCount;
-            double lengthBonus = Math.Log10(lengthFactor + 315) - 1.5 - 0.22 * Math.Min(1.0, lengthFactor / 2000);
+            double lengthBonus = Math.Log10(lengthFactor + 315) - 1.5 - 0.215 * Math.Min(1.0, lengthFactor / 2000);
 
             // Longer maps are worth more
             value *= lengthBonus;
@@ -53,16 +53,16 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 
             // Combo scaling
             if (catchAttributes.MaxCombo > 0)
-                value *= Math.Min(Math.Pow(score.MaxCombo, 0.45) / Math.Pow(catchAttributes.MaxCombo, 0.45), 1.0);
+                value *= Math.Min(Math.Pow(score.MaxCombo, 0.4) / Math.Pow(catchAttributes.MaxCombo, 0.4), 1.0);
 
 
             double approachRate = catchAttributes.ApproachRate;
             double circleSize = score.BeatmapInfo.Difficulty.CircleSize;
-            double approachRateFactor = 1.0 + Math.Pow(lengthBonus, 1.3) * Math.Pow(circleSize, 1.7) * Math.Pow(approachRate, 1.5) / 3900;
+            double approachRateFactor = 1.0 + Math.Pow(lengthBonus, 1.3) * Math.Pow(circleSize, 1.7) * Math.Pow(approachRate, 1.5) / 3800;
             if (approachRate > 9.0)
                 approachRateFactor += 0.08 * (approachRate - 9.0); // 8% for each AR above 9
             if (approachRate > 10.0)
-                approachRateFactor += 0.5 * (approachRate - 10.0); // Additional 50% at AR 11
+                approachRateFactor += 0.45 * (approachRate - 10.0); // Additional 45% at AR 11
 
             if (approachRate < 9.0)
                 value *= 1 + 0.01 * (9.0 - approachRate); // Additional 1% for each AR below 9
