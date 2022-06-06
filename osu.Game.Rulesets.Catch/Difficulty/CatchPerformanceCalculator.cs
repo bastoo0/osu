@@ -43,7 +43,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 
             // Longer maps are worth more
             double lengthFactor = numTotalHits * 0.5 + catchAttributes.DirectionChangeCount;
-            double lengthBonus = Math.Log10(lengthFactor + 315) - 1.5 - 0.215 * Math.Min(1.0, lengthFactor / 2000);
+            double lengthBonus = Math.Log10(lengthFactor + 315) - 1.51 - 0.215 * Math.Min(1.0, lengthFactor / 2000);
 
             // Longer maps are worth more
             value *= lengthBonus;
@@ -62,7 +62,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             if (approachRate > 9.0)
                 approachRateFactor += 0.08 * (approachRate - 9.0); // 8% for each AR above 9
             if (approachRate > 10.0)
-                approachRateFactor += 0.6 * (approachRate - 10.0); // Additional 60% at AR 11
+                approachRateFactor += 0.8 * (approachRate - 10.0); // Additional 80% at AR 11
 
             if (approachRate < 9.0)
                 value *= 1 + 0.01 * (9.0 - approachRate); // Additional 1% for each AR below 9
