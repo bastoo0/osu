@@ -43,7 +43,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 
             // Longer maps are worth more
             double lengthFactor = numTotalHits * 0.5 + catchAttributes.DirectionChangeCount;
-            double lengthBonus = Math.Log10(lengthFactor + 315) - 1.51 - 0.215 * Math.Min(1.0, lengthFactor / 2000);
+            double lengthBonus = Math.Log10(lengthFactor + 400) - 1.6;
 
             // Longer maps are worth more
             value *= lengthBonus;
@@ -53,12 +53,12 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 
             // Combo scaling
             if (catchAttributes.MaxCombo > 0)
-                value *= Math.Min(Math.Pow(score.MaxCombo, 0.4) / Math.Pow(catchAttributes.MaxCombo, 0.4), 1.0);
+                value *= Math.Min(Math.Pow(score.MaxCombo, 0.42) / Math.Pow(catchAttributes.MaxCombo, 0.42), 1.0);
 
 
             double approachRate = catchAttributes.ApproachRate;
             double circleSize = score.BeatmapInfo.Difficulty.CircleSize;
-            double approachRateFactor = 1.0 + Math.Pow(lengthBonus, 1.4) * Math.Pow(circleSize, 1.7) * Math.Pow(approachRate, 1.4) / 1600;
+            double approachRateFactor = 1.0 + (0.1 * Math.Pow(circleSize, 2) - (0.8 *circleSize) + 2.5) / 5;
             if (approachRate > 9.0)
                 approachRateFactor += 0.08 * (approachRate - 9.0); // 8% for each AR above 9
             if (approachRate > 10.0)
@@ -85,7 +85,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             if (score.Mods.Any(m => m is ModFlashlight))
             {
                 // Apply length bonus again if flashlight is on simply because it becomes a lot harder on longer maps.
-                value *= Math.Pow(lengthBonus, 1.17);
+                value *= Math.Pow(lengthBonus, 0.9);
 
                 if (approachRate > 8.0f)
                     value *= 0.18f * (approachRate - 8.0f) + 1; // 18% for each AR above 8
