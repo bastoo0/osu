@@ -87,7 +87,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             if (!catchCurrent.LastObject.HyperDash)
             {
                 // The base value is a ratio between distance moved and strain time
-                movementValue = 0.057 * Math.Abs(distanceMoved) / weightedStrainTime * Math.Pow(catcherSpeedMultiplier, 0.15);
+                movementValue = 0.057 * Math.Abs(distanceMoved) / weightedStrainTime;
 
                 if (Math.Abs(distanceMoved) > 0.1 && Math.Sign(distanceMoved) != Math.Sign(lastDistanceMoved) && Math.Sign(lastDistanceMoved) != 0)
                 {
