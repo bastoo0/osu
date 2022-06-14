@@ -106,7 +106,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
                 if (previousLastObjectWasHyperDash)
                 {
                     // Scaling hyperdash chains according to movement
-                    movementValue *= isSameDirection ? Math.Pow(Math.Abs(distanceMoved), 0.5) / 11.5 : 3.2 / Math.Pow(Math.Abs(distanceMoved), 0.2);
+                    movementValue *= isSameDirection ? Math.Pow(Math.Abs(distanceMoved), 0.5) / 12 : 3.15 / Math.Pow(Math.Abs(distanceMoved), 0.2);
                 }
             }
 

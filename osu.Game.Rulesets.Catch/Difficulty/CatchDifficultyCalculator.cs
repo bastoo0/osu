@@ -19,7 +19,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 {
     public class CatchDifficultyCalculator : DifficultyCalculator
     {
-        private const double star_scaling_factor = 0.0553;
+        private const double star_scaling_factor = 0.111;
 
         private float halfCatcherWidth;
 
@@ -39,7 +39,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             return new CatchDifficultyAttributes
             {
                 DirectionChangeCount = ((Movement)skills[0]).DirectionChangeCount,
-                StarRating = Math.Pow(skills[0].DifficultyValue(), 0.59) * star_scaling_factor,
+                StarRating = Math.Pow(skills[0].DifficultyValue(), 0.5) * star_scaling_factor,
                 Mods = mods,
                 ApproachRate = preempt > 1200.0 ? -(preempt - 1800.0) / 120.0 : -(preempt - 1200.0) / 150.0 + 5.0,
                 MaxCombo = beatmap.HitObjects.Count(h => h is Fruit) + beatmap.HitObjects.OfType<JuiceStream>().SelectMany(j => j.NestedHitObjects).Count(h => !(h is TinyDroplet)),
