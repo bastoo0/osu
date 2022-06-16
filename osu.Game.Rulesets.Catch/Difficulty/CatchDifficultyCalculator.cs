@@ -19,7 +19,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 {
     public class CatchDifficultyCalculator : DifficultyCalculator
     {
-        private const double star_scaling_factor = 0.111;
+        private const double star_scaling_factor = 0.113;
 
         private float halfCatcherWidth;
 

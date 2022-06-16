@@ -36,14 +36,14 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             misses = score.Statistics.GetValueOrDefault(HitResult.Miss);
 
             // We are heavily relying on aim in catch the beat
-            double value = Math.Pow(5.0 * Math.Max(1.0, catchAttributes.StarRating / 0.0049) - 4.0, 2) / 170000.0;
+            double value = Math.Pow(5.0 * Math.Max(1.0, catchAttributes.StarRating / 0.0049) - 4.0, 2) / 154000.0;
 
             // Longer maps are worth more. "Longer" means how many hits there are which can contribute to combo
             int numTotalHits = totalComboHits();
 
             // Longer maps are worth more
             double lengthFactor = numTotalHits * 0.5 + catchAttributes.DirectionChangeCount;
-            double lengthBonus = Math.Log(lengthFactor + 600, 70) - 1 / Math.Log(lengthFactor + 100, 6000) + 1.01;
+            double lengthBonus = Math.Log(lengthFactor + 600, 100) - 1 / Math.Log(lengthFactor + 100, 6000) + 1.06;
 
             // Longer maps are worth more
             value *= lengthBonus;
@@ -58,12 +58,11 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 
             double approachRate = catchAttributes.ApproachRate;
             double circleSize = score.BeatmapInfo.Difficulty.CircleSize;
-            double approachRateFactor = 1.0 + (0.1 * Math.Pow(circleSize, 2) - (0.8 * circleSize) + 2.5) / 6;
+            double approachRateFactor = 1 + 0.022 * Math.Pow(circleSize, 1.65) * Math.Max(1, Math.Pow(lengthBonus, 0.5));
             if (approachRate > 9.0)
-                approachRateFactor = Math.Pow(approachRateFactor, Math.Max(1, 1 + 0.9 * Math.Pow(approachRate - 9.0, 1.7)) * Math.Max(1, Math.Pow(lengthBonus, 0.53)));
                 approachRateFactor += 0.08 * (approachRate - 9.0); // 8% for each AR above 9
             if (approachRate > 10.0)
-                approachRateFactor += 0.36 * Math.Pow(approachRate - 10.0, 1.4); // Additional 62% at AR 11
+                approachRateFactor += 1.07 * Math.Pow(approachRate - 10.0, 1.7); // Additional 62% at AR 11
 
 
             value *= approachRateFactor;
@@ -77,16 +76,16 @@ namespace osu.Game.Rulesets.Catch.Difficulty
                     value *= 1 + 0.04 * (11.0 - Math.Min(11.0, approachRate)); // 4% at AR 10, 1% at AR 11
 
                 if (approachRate < 9.0)
-                    value *= 1 + 0.03 * (9.0 - approachRate); // Additional 3% for each AR below 9
+                    value *= 1 + 0.04 * (9.0 - approachRate); // Additional 3% for each AR below 9
             }
 
             if (score.Mods.Any(m => m is ModFlashlight))
             {
                 // Apply length bonus again if flashlight is on simply because it becomes a lot harder on longer maps.
-                value *= Math.Pow(lengthBonus, 1.61);
+                value *= Math.Pow(lengthBonus, 1.09);
 
                 if (approachRate > 8.0f)
-                    value *= 0.1f * (approachRate - 8.0f) + 1; // 18% for each AR above 8
+                    value *= 0.28f * (approachRate - 8.0f) + 1; // 18% for each AR above 8
 
             }
 
