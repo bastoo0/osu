@@ -87,23 +87,23 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             if (!catchCurrent.LastObject.HyperDash)
             {
                 // The base value is a ratio between distance moved and strain time
-                movementValue = 0.057 * Math.Abs(distanceMoved) / weightedStrainTime;
+                movementValue = 0.054 * Math.Abs(distanceMoved) / weightedStrainTime * Math.Pow(catcherSpeedMultiplier, 0.15);
 
                 if (Math.Abs(distanceMoved) > 0.1 && Math.Sign(distanceMoved) != Math.Sign(lastDistanceMoved) && Math.Sign(lastDistanceMoved) != 0)
                 {
                     // We buff shorter movements upon direction change
                     movementValue *= 1.2 + (16 / Math.Pow(Math.Abs(exactDistanceMoved), 0.7));
                 }
-                else movementValue *= 0.78;
+                else movementValue *= 0.77;
             }
             else
             {
                 // Hyperdashes calculation
                 // Both strain time and distance moved are scaled down because both factors are not optimally representing the difficulty
-                movementValue = 0.054 * Math.Pow(Math.Abs(distanceMoved) / (weightedStrainTime), 0.35);
+                movementValue = 0.055 * Math.Pow(Math.Abs(distanceMoved) / (weightedStrainTime), 0.34);
 
                 if (isSameDirection || lastDistanceMoved == 0)
-                    movementValue *= 0.85;
+                    movementValue *= 0.86;
                 // Handling hyperdash chains
                 if (previousLastObjectWasHyperDash)
                 {
