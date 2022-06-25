@@ -58,7 +58,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 
             double approachRate = catchAttributes.ApproachRate;
             double circleSize = score.BeatmapInfo.Difficulty.CircleSize;
-            double approachRateFactor = 1 + 0.021 * Math.Pow(circleSize, 1.65) * Math.Max(1, Math.Pow(lengthBonus, 0.5));
+            double approachRateFactor = 1 + 0.026 * Math.Pow(circleSize, 1.5) * Math.Max(1, Math.Pow(lengthBonus, 0.5));
             if (approachRate > 9.0)
                 approachRateFactor += 0.08 * (approachRate - 9.0); // 8% for each AR above 9
             if (approachRate > 10.0)
@@ -82,10 +82,10 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             if (score.Mods.Any(m => m is ModFlashlight))
             {
                 // Apply length bonus again if flashlight is on simply because it becomes a lot harder on longer maps.
-                value *= Math.Pow(lengthBonus, 1.09);
+                value *= Math.Log(lengthFactor + 50, 60);
 
                 if (approachRate > 8.0f)
-                    value *= 0.28f * (approachRate - 8.0f) + 1; // 18% for each AR above 8
+                    value *= 0.25f * (approachRate - 8.0f) + 1; // 18% for each AR above 8
 
             }
 
