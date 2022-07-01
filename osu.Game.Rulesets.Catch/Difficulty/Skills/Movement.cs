@@ -70,7 +70,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             float distanceMoved = playerPosition - lastPlayerPosition.Value;
             double exactDistanceMoved = catchCurrent.NormalizedPosition - lastPlayerPosition.Value;
 
-            double weightedStrainTime = catchCurrent.StrainTime / Math.Pow(catcherSpeedMultiplier, 0.15);
+            double weightedStrainTime = catchCurrent.StrainTime / Math.Pow(catcherSpeedMultiplier, 0.2);
             double edgeDashBonus = 0;
             bool isSameDirection = Math.Sign(exactDistanceMoved) == Math.Sign(lastExactDistanceMoved);
 
@@ -92,7 +92,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
                 if (Math.Abs(distanceMoved) > 0.1 && Math.Sign(distanceMoved) != Math.Sign(lastDistanceMoved) && Math.Sign(lastDistanceMoved) != 0)
                 {
                     // We buff shorter movements upon direction change
-                    movementValue *= 1.2 + (16 / Math.Pow(Math.Abs(exactDistanceMoved), 0.7));
+                    movementValue *= 1.2 + (17 / Math.Pow(Math.Abs(exactDistanceMoved), 0.7));
                 }
                 else movementValue *= 0.77;
             }
