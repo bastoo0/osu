@@ -1,6 +1,8 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
 using JetBrains.Annotations;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
@@ -10,7 +12,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
-using osu.Game.Online.API.Requests.Responses;
+using osu.Game.Users;
 using osu.Game.Users.Drawables;
 using osu.Game.Utils;
 using osuTK;
@@ -53,6 +55,7 @@ namespace osu.Game.Screens.Play.HUD
         public BindableDouble Accuracy { get; } = new BindableDouble(1);
         public BindableInt Combo { get; } = new BindableInt();
         public BindableBool HasQuit { get; } = new BindableBool();
+        public Bindable<long> DisplayOrder { get; } = new Bindable<long>();
 
         public Color4? BackgroundColour { get; set; }
 
@@ -79,7 +82,7 @@ namespace osu.Game.Screens.Play.HUD
         }
 
         [CanBeNull]
-        public APIUser User { get; }
+        public IUser User { get; }
 
         /// <summary>
         /// Whether this score is the local user or a replay player (and should be focused / always visible).
@@ -101,7 +104,7 @@ namespace osu.Game.Screens.Play.HUD
         /// </summary>
         /// <param name="user">The score's player.</param>
         /// <param name="tracked">Whether the player is the local user or a replay player.</param>
-        public GameplayLeaderboardScore([CanBeNull] APIUser user, bool tracked)
+        public GameplayLeaderboardScore([CanBeNull] IUser user, bool tracked)
         {
             User = user;
             Tracked = tracked;

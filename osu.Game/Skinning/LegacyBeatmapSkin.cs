@@ -1,8 +1,6 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-#nullable enable
-
 using osu.Framework.Audio.Sample;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions.ObjectExtensions;
@@ -11,6 +9,7 @@ using osu.Framework.IO.Stores;
 using osu.Game.Audio;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.Formats;
+using osu.Game.Database;
 using osu.Game.IO;
 using osu.Game.Rulesets.Objects.Legacy;
 using osu.Game.Rulesets.Objects.Types;
@@ -37,11 +36,11 @@ namespace osu.Game.Skinning
 
         private static IResourceStore<byte[]> createRealmBackedStore(BeatmapInfo beatmapInfo, IStorageResourceProvider? resources)
         {
-            if (resources == null)
+            if (resources == null || beatmapInfo.BeatmapSet == null)
                 // should only ever be used in tests.
                 return new ResourceStore<byte[]>();
 
-            return new RealmBackedResourceStore(beatmapInfo.BeatmapSet, resources.Files, new[] { @"ogg" });
+            return new RealmBackedResourceStore<BeatmapSetInfo>(beatmapInfo.BeatmapSet.ToLive(resources.RealmAccess), resources.Files, resources.RealmAccess);
         }
 
         public override Drawable? GetDrawableComponent(ISkinComponent component)
@@ -97,7 +96,7 @@ namespace osu.Game.Skinning
             new SkinInfo
             {
                 Name = beatmapInfo.ToString(),
-                Creator = beatmapInfo.Metadata.Author.Username ?? string.Empty
+                Creator = beatmapInfo.Metadata.Author.Username
             };
     }
 }

@@ -1,10 +1,14 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
 using System;
 using System.Linq;
 using JetBrains.Annotations;
 using osu.Framework.Allocation;
+using osu.Framework.Audio;
+using osu.Framework.Audio.Sample;
 using osu.Framework.Localisation;
 using osu.Framework.Threading;
 using osu.Game.Graphics;
@@ -27,6 +31,18 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Match
         [CanBeNull]
         private MultiplayerRoom room => multiplayerClient.Room;
 
+        private Sample countdownTickSample;
+        private Sample countdownWarnSample;
+        private Sample countdownWarnFinalSample;
+
+        [BackgroundDependencyLoader]
+        private void load(AudioManager audio)
+        {
+            countdownTickSample = audio.Samples.Get(@"Multiplayer/countdown-tick");
+            countdownWarnSample = audio.Samples.Get(@"Multiplayer/countdown-warn");
+            countdownWarnFinalSample = audio.Samples.Get(@"Multiplayer/countdown-warn-final");
+        }
+
         protected override void LoadComplete()
         {
             base.LoadComplete();
@@ -36,27 +52,71 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Match
         }
 
         private MultiplayerCountdown countdown;
-        private DateTimeOffset countdownReceivedTime;
+        private double countdownChangeTime;
         private ScheduledDelegate countdownUpdateDelegate;
 
         private void onRoomUpdated() => Scheduler.AddOnce(() =>
         {
-            if (countdown == null && room?.Countdown != null)
-                countdownReceivedTime = DateTimeOffset.Now;
+            MultiplayerCountdown newCountdown = room?.ActiveCountdowns.SingleOrDefault(c => c is MatchStartCountdown);
 
-            countdown = room?.Countdown;
+            if (newCountdown != countdown)
+            {
+                countdown = newCountdown;
+                countdownChangeTime = Time.Current;
+            }
 
-            if (room?.Countdown != null)
-                countdownUpdateDelegate ??= Scheduler.AddDelayed(updateButtonText, 100, true);
+            scheduleNextCountdownUpdate();
+
+            updateButtonText();
+            updateButtonColour();
+        });
+
+        private void scheduleNextCountdownUpdate()
+        {
+            countdownUpdateDelegate?.Cancel();
+
+            if (countdown != null)
+            {
+                // The remaining time on a countdown may be at a fractional portion between two seconds.
+                // We want to align certain audio/visual cues to the point at which integer seconds change.
+                // To do so, we schedule to the next whole second. Note that scheduler invocation isn't
+                // guaranteed to be accurate, so this may still occur slightly late, but even in such a case
+                // the next invocation will be roughly correct.
+                double timeToNextSecond = countdownTimeRemaining.TotalMilliseconds % 1000;
+
+                countdownUpdateDelegate = Scheduler.AddDelayed(onCountdownTick, timeToNextSecond);
+            }
             else
             {
                 countdownUpdateDelegate?.Cancel();
                 countdownUpdateDelegate = null;
             }
 
-            updateButtonText();
-            updateButtonColour();
-        });
+            void onCountdownTick()
+            {
+                updateButtonText();
+
+                int secondsRemaining = (int)countdownTimeRemaining.TotalSeconds;
+
+                playTickSound(secondsRemaining);
+
+                if (secondsRemaining > 0)
+                    scheduleNextCountdownUpdate();
+            }
+        }
+
+        private void playTickSound(int secondsRemaining)
+        {
+            if (secondsRemaining < 10) countdownTickSample?.Play();
+
+            if (secondsRemaining <= 3)
+            {
+                if (secondsRemaining > 0)
+                    countdownWarnSample?.Play();
+                else
+                    countdownWarnFinalSample?.Play();
+            }
+        }
 
         private void updateButtonText()
         {
@@ -74,15 +134,7 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Match
 
             if (countdown != null)
             {
-                TimeSpan timeElapsed = DateTimeOffset.Now - countdownReceivedTime;
-                TimeSpan countdownRemaining;
-
-                if (timeElapsed > countdown.TimeRemaining)
-                    countdownRemaining = TimeSpan.Zero;
-                else
-                    countdownRemaining = countdown.TimeRemaining - timeElapsed;
-
-                string countdownText = $"Starting in {countdownRemaining:mm\\:ss}";
+                string countdownText = $"Starting in {countdownTimeRemaining:mm\\:ss}";
 
                 switch (localUser?.State)
                 {
@@ -115,6 +167,22 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Match
             }
         }
 
+        private TimeSpan countdownTimeRemaining
+        {
+            get
+            {
+                double timeElapsed = Time.Current - countdownChangeTime;
+                TimeSpan remaining;
+
+                if (timeElapsed > countdown.TimeRemaining.TotalMilliseconds)
+                    remaining = TimeSpan.Zero;
+                else
+                    remaining = countdown.TimeRemaining - TimeSpan.FromMilliseconds(timeElapsed);
+
+                return remaining;
+            }
+        }
+
         private void updateButtonColour()
         {
             if (room == null)
@@ -133,7 +201,7 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Match
 
                 case MultiplayerUserState.Spectating:
                 case MultiplayerUserState.Ready:
-                    if (room?.Host?.Equals(localUser) == true && room.Countdown == null)
+                    if (room?.Host?.Equals(localUser) == true && !room.ActiveCountdowns.Any(c => c is MatchStartCountdown))
                         setGreen();
                     else
                         setYellow();
@@ -168,8 +236,13 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Match
         {
             get
             {
-                if (room?.Countdown != null && multiplayerClient.IsHost && multiplayerClient.LocalUser?.State == MultiplayerUserState.Ready && !room.Settings.AutoStartEnabled)
+                if (room?.ActiveCountdowns.Any(c => c is MatchStartCountdown) == true
+                    && multiplayerClient.IsHost
+                    && multiplayerClient.LocalUser?.State == MultiplayerUserState.Ready
+                    && !room.Settings.AutoStartEnabled)
+                {
                     return "Cancel countdown";
+                }
 
                 return base.TooltipText;
             }

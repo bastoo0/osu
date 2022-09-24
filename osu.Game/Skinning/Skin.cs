@@ -1,8 +1,6 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-#nullable enable
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,7 +11,6 @@ using Newtonsoft.Json;
 using osu.Framework.Audio.Sample;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.OpenGL.Textures;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.IO.Stores;
 using osu.Framework.Logging;
@@ -54,6 +51,8 @@ namespace osu.Game.Skinning
             where TLookup : notnull
             where TValue : notnull;
 
+        private readonly RealmBackedResourceStore<SkinInfo>? realmBackedStorage;
+
         /// <summary>
         /// Construct a new skin.
         /// </summary>
@@ -67,14 +66,18 @@ namespace osu.Game.Skinning
             {
                 SkinInfo = skin.ToLive(resources.RealmAccess);
 
-                storage ??= new RealmBackedResourceStore(skin, resources.Files, new[] { @"ogg" });
+                storage ??= realmBackedStorage = new RealmBackedResourceStore<SkinInfo>(SkinInfo, resources.Files, resources.RealmAccess);
 
                 var samples = resources.AudioManager?.GetSampleStore(storage);
                 if (samples != null)
                     samples.PlaybackConcurrency = OsuGameBase.SAMPLE_CONCURRENCY;
 
+                // osu-stable performs audio lookups in order of wav -> mp3 -> ogg.
+                // The GetSampleStore() call above internally adds wav and mp3, so ogg is added at the end to ensure expected ordering.
+                (storage as ResourceStore<byte[]>)?.AddExtension("ogg");
+
                 Samples = samples;
-                Textures = new TextureStore(resources.CreateTextureLoaderStore(storage));
+                Textures = new TextureStore(resources.Renderer, resources.CreateTextureLoaderStore(storage));
             }
             else
             {
@@ -106,6 +109,13 @@ namespace osu.Game.Skinning
                 try
                 {
                     string jsonContent = Encoding.UTF8.GetString(bytes);
+
+                    // handle namespace changes...
+
+                    // can be removed 2023-01-31
+                    jsonContent = jsonContent.Replace(@"osu.Game.Screens.Play.SongProgress", @"osu.Game.Screens.Play.HUD.DefaultSongProgress");
+                    jsonContent = jsonContent.Replace(@"osu.Game.Screens.Play.HUD.LegacyComboCounter", @"osu.Game.Skinning.LegacyComboCounter");
+
                     var deserializedContent = JsonConvert.DeserializeObject<IEnumerable<SkinnableInfo>>(jsonContent);
 
                     if (deserializedContent == null)
@@ -155,16 +165,7 @@ namespace osu.Game.Skinning
                     var components = new List<Drawable>();
 
                     foreach (var i in skinnableInfo)
-                    {
-                        try
-                        {
-                            components.Add(i.CreateInstance());
-                        }
-                        catch (Exception e)
-                        {
-                            Logger.Error(e, $"Unable to create skin component {i.Type.Name}");
-                        }
-                    }
+                        components.Add(i.CreateInstance());
 
                     return new SkinnableTargetComponentsContainer
                     {
@@ -200,6 +201,8 @@ namespace osu.Game.Skinning
 
             Textures?.Dispose();
             Samples?.Dispose();
+
+            realmBackedStorage?.Dispose();
         }
 
         #endregion
