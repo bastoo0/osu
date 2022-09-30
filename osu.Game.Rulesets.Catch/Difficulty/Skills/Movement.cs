@@ -28,7 +28,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
         private float? lastPlayerPosition;
         private float lastDistanceMoved;
         private double lastStrainTime;
-        public int lastMovementDirection;
+        public int LastMovementDirection;
         private bool isTapDashBoosted = false;
         private int tapDashDirection;
         private double tapDashStrainTimeAddition;
@@ -72,7 +72,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             float distanceMoved = playerPosition - lastPlayerPosition.Value;
             double exactDistanceMoved = catchCurrent.NormalizedPosition - lastPlayerPosition.Value;
 
-            double weightedStrainTime = catchCurrent.StrainTime / Math.Pow(catcherSpeedMultiplier, 0.2);
+            double weightedStrainTime = catchCurrent.StrainTime / Math.Pow(catcherSpeedMultiplier, 0.15);
             double edgeDashBonus = 0;
             bool isSameDirection = Math.Sign(exactDistanceMoved) == Math.Sign(lastExactDistanceMoved);
 
@@ -89,29 +89,25 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             if (!catchCurrent.LastObject.HyperDash)
             {
                 // The base value is a ratio between distance moved and strain time
-                movementValue = 0.054 * Math.Abs(distanceMoved) / weightedStrainTime;
+                movementValue = 0.228 * Math.Pow(Math.Pow(Math.Abs(distanceMoved), 0.76) / weightedStrainTime, 1.4);
 
                 if (Math.Abs(distanceMoved) > 0.1 && Math.Sign(distanceMoved) != Math.Sign(lastDistanceMoved) && Math.Sign(lastDistanceMoved) != 0)
                 {
                     // We buff shorter movements upon direction change
-                    movementValue *= 1.2 + (17 / Math.Pow(Math.Abs(exactDistanceMoved), 0.7));
+                    movementValue *= 1.2 + (30 / Math.Pow(Math.Abs(exactDistanceMoved), 0.7));
                 }
-                else movementValue *= 0.77;
+                else movementValue *= 0.75;
             }
             else
             {
                 // Hyperdashes calculation
                 // Both strain time and distance moved are scaled down because both factors are not optimally representing the difficulty
-                movementValue = 0.055 * Math.Pow(Math.Abs(distanceMoved) / (weightedStrainTime), 0.35);
+                movementValue = 0.071 * Math.Pow(Math.Abs(distanceMoved) / (weightedStrainTime), 0.48);
 
-                if (isSameDirection || lastDistanceMoved == 0)
-                    movementValue *= 0.87;
-                // Handling hyperdash chains
                 if (previousLastObjectWasHyperDash)
-                {
-                    // Scaling hyperdash chains according to movement
-                    movementValue *= isSameDirection ? Math.Pow(Math.Abs(distanceMoved), 0.5) / 11 : 3.15 / Math.Pow(Math.Abs(distanceMoved), 0.2);
-                }
+                    movementValue *= 1.5;
+                // Scaling hyperdash chains according to movement
+                movementValue *= isSameDirection ? Math.Pow(Math.Abs(distanceMoved), 0.5) / 40 : 1.4 / Math.Pow(Math.Abs(distanceMoved), 0.2);
             }
 
             // We handle the case of tap-dashes ending with hdashes (stacks that require tapping in the same direction)
@@ -120,7 +116,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
                 if (tapDashDirection == Math.Sign(distanceMoved))
                 {
                     // Scaling factor is used to calculate the value using time spent since last "tap"
-                    double tapDashScalingFactor = Math.Log(tapDashStrainTimeAddition - 33, 1.3) - 0.07 * tapDashStrainTimeAddition - 8.3;
+                    double tapDashScalingFactor = Math.Log(tapDashStrainTimeAddition - 33, 1.3) - 0.07 * tapDashStrainTimeAddition - 7.8;
                     // Bonus is nerfed when the stack is not straight
                     double tapDashBonus = tapDashScalingFactor * Math.Max(0, -0.03 * Math.Abs(tapDashDistanceAddition) + 1);
                     movementValue *= 1 + Math.Max(0, tapDashBonus);
