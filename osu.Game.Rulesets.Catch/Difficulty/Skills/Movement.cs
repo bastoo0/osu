@@ -28,7 +28,6 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
         private float? lastPlayerPosition;
         private float lastDistanceMoved;
         private double lastStrainTime;
-        public int LastMovementDirection;
         private bool isTapDashBoosted = false;
         private int tapDashDirection;
         private double tapDashStrainTimeAddition;
@@ -72,7 +71,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             float distanceMoved = playerPosition - lastPlayerPosition.Value;
             double exactDistanceMoved = catchCurrent.NormalizedPosition - lastPlayerPosition.Value;
 
-            double weightedStrainTime = catchCurrent.StrainTime / Math.Pow(catcherSpeedMultiplier, 0.15);
+            double weightedStrainTime = catchCurrent.StrainTime;
             double edgeDashBonus = 0;
             bool isSameDirection = Math.Sign(exactDistanceMoved) == Math.Sign(lastExactDistanceMoved);
 
@@ -89,12 +88,12 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             if (!catchCurrent.LastObject.HyperDash)
             {
                 // The base value is a ratio between distance moved and strain time
-                movementValue = 0.228 * Math.Pow(Math.Pow(Math.Abs(distanceMoved), 0.76) / weightedStrainTime, 1.4);
+                movementValue = 0.19 * Math.Pow(Math.Pow(Math.Abs(distanceMoved), 0.76) / weightedStrainTime, 1.3);
 
                 if (Math.Abs(distanceMoved) > 0.1 && Math.Sign(distanceMoved) != Math.Sign(lastDistanceMoved) && Math.Sign(lastDistanceMoved) != 0)
                 {
                     // We buff shorter movements upon direction change
-                    movementValue *= 1.2 + (30 / Math.Pow(Math.Abs(exactDistanceMoved), 0.7));
+                    movementValue *= 1.2 + (26 / Math.Pow(Math.Abs(exactDistanceMoved), 0.7));
                 }
                 else movementValue *= 0.75;
             }
@@ -102,12 +101,12 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             {
                 // Hyperdashes calculation
                 // Both strain time and distance moved are scaled down because both factors are not optimally representing the difficulty
-                movementValue = 0.071 * Math.Pow(Math.Abs(distanceMoved) / (weightedStrainTime), 0.48);
+                movementValue = 0.09 * Math.Pow(Math.Abs(distanceMoved) / (weightedStrainTime), 0.5);
 
                 if (previousLastObjectWasHyperDash)
-                    movementValue *= 1.5;
+                    movementValue *= 1.4;
                 // Scaling hyperdash chains according to movement
-                movementValue *= isSameDirection ? Math.Pow(Math.Abs(distanceMoved), 0.5) / 40 : 1.4 / Math.Pow(Math.Abs(distanceMoved), 0.2);
+                movementValue *= isSameDirection ? Math.Pow(Math.Abs(distanceMoved), 0.5) / 38 : 1.3 / Math.Pow(Math.Abs(distanceMoved), 0.2);
             }
 
             // We handle the case of tap-dashes ending with hdashes (stacks that require tapping in the same direction)
