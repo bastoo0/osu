@@ -25,6 +25,9 @@ namespace osu.Game.Rulesets.Catch.Difficulty
         [JsonProperty("direction_change_count")]
         public int DirectionChangeCount;
 
+        [JsonProperty("circle_size")]
+        public double CircleSize { get; set; }
+
         public override IEnumerable<(int attributeId, object value)> ToDatabaseAttributes()
         {
             foreach (var v in base.ToDatabaseAttributes())
