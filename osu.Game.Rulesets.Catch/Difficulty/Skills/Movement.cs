@@ -93,7 +93,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
                 if (Math.Abs(distanceMoved) > 0.1 && Math.Sign(distanceMoved) != Math.Sign(lastDistanceMoved) && Math.Sign(lastDistanceMoved) != 0)
                 {
                     // We buff shorter movements upon direction change
-                    movementValue *= 58 / Math.Pow(Math.Abs(exactDistanceMoved), 0.8);
+                    movementValue *= 1.71;
                 }
                 else movementValue *= 0.5;
             }
