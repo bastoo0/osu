@@ -93,7 +93,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
                 if (Math.Abs(distanceMoved) > 0.1 && Math.Sign(distanceMoved) != Math.Sign(lastDistanceMoved) && Math.Sign(lastDistanceMoved) != 0)
                 {
                     // We buff shorter movements upon direction change
-                    movementValue *= 1.2 + (40 / Math.Pow(Math.Abs(exactDistanceMoved), 0.7));
+                    movementValue *= 1.2 + (30 / Math.Pow(Math.Abs(exactDistanceMoved), 0.55));
                 }
                 else movementValue *= 0.65;
             }
@@ -101,7 +101,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             {
                 // Hyperdashes calculation
                 // Both strain time and distance moved are scaled down because both factors are not optimally representing the difficulty
-                movementValue = 0.092 * Math.Pow(Math.Abs(distanceMoved) / (weightedStrainTime), 0.5);
+                movementValue = 0.089 * Math.Pow(Math.Abs(distanceMoved) / (weightedStrainTime), 0.5);
 
                 // Scaling hyperdash chains according to movement
                 movementValue *= isSameDirection ? Math.Pow(Math.Abs(distanceMoved), 0.5) / 36 : 1.29 / Math.Pow(Math.Abs(distanceMoved), 0.2);
