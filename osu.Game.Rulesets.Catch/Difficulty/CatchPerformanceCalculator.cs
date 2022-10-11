@@ -60,7 +60,8 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 
             double approachRate = catchAttributes.ApproachRate;
             double circleSize = catchAttributes.CircleSize;
-            double approachRateFactor = Math.Pow(1 + 0.01 * Math.Pow(circleSize, 1.6), 1 + (Math.Pow(approachRate, 1.2) / 20));
+            double approachRateFactor = Math.Pow(1 + 0.01 * Math.Pow(circleSize, 1.6), 1 + (Math.Pow(approachRate, 2) / 140));
+
             if (approachRate > 9.0)
                 approachRateFactor += 0.08 * (approachRate - 9.0); // 8% for each AR above 9
             if (approachRate > 10.0)
@@ -73,7 +74,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             {
                 // Hiddens gives almost nothing on max approach rate, and more the lower it is
                 if (approachRate <= 10.0)
-                    value *= 1.06 + 0.07 * (10.0 - Math.Min(10.0, approachRate)); // 8% for each AR below 10
+                    value *= 1.04 + 0.075 * (10.0 - Math.Min(10.0, approachRate)); // 8% for each AR below 10
                 else if (approachRate > 10.0)
                     value *= 1 + 0.04 * (11.0 - Math.Min(11.0, approachRate)); // 4% at AR 10, 1% at AR 11
 
@@ -87,7 +88,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
                 value *= Math.Log(lengthFactor + 50, 60);
 
                 if (approachRate > 8.0f)
-                    value *= 0.25f * (approachRate - 8.0f) + 1; // 18% for each AR above 8
+                    value *= 0.23f * (approachRate - 8.0f) + 1; // 18% for each AR above 8
 
             }
 
