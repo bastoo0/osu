@@ -88,14 +88,14 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             if (!catchCurrent.LastObject.HyperDash)
             {
                 // The base value is a ratio between distance moved and strain time
-                movementValue = 0.19 * Math.Pow(Math.Pow(Math.Abs(distanceMoved), 0.76) / weightedStrainTime, 1.3);
+                movementValue = 0.125 * Math.Pow(Math.Pow(Math.Abs(distanceMoved), 0.76) / weightedStrainTime, 1.3);
 
                 if (Math.Abs(distanceMoved) > 0.1 && Math.Sign(distanceMoved) != Math.Sign(lastDistanceMoved) && Math.Sign(lastDistanceMoved) != 0)
                 {
                     // We buff shorter movements upon direction change
-                    movementValue *= 1.71;
+                    movementValue *= 1.2 + (40 / Math.Pow(Math.Abs(exactDistanceMoved), 0.7));
                 }
-                else movementValue *= 0.5;
+                else movementValue *= 0.65;
             }
             else
             {
@@ -104,7 +104,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
                 movementValue = 0.092 * Math.Pow(Math.Abs(distanceMoved) / (weightedStrainTime), 0.5);
 
                 // Scaling hyperdash chains according to movement
-                movementValue *= isSameDirection ? Math.Pow(Math.Abs(distanceMoved), 0.5) / 37 : 1.24 / Math.Pow(Math.Abs(distanceMoved), 0.2);
+                movementValue *= isSameDirection ? Math.Pow(Math.Abs(distanceMoved), 0.5) / 36 : 1.29 / Math.Pow(Math.Abs(distanceMoved), 0.2);
             }
 
             // We handle the case of tap-dashes ending with hdashes (stacks that require tapping in the same direction)
