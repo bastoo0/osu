@@ -14,6 +14,8 @@ using osu.Game.Rulesets.Difficulty;
 using osu.Game.Rulesets.Difficulty.Preprocessing;
 using osu.Game.Rulesets.Difficulty.Skills;
 using osu.Game.Rulesets.Mods;
+using osu.Game.Rulesets.Catch.Difficulty.Evaluators;
+using System.Linq;
 
 namespace osu.Game.Rulesets.Catch.Difficulty
 {
@@ -38,12 +40,17 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             // this is the same as osu!, so there's potential to share the implementation... maybe
             double preempt = IBeatmapDifficultyInfo.DifficultyRange(beatmap.Difficulty.ApproachRate, 1800, 1200, 450) / clockRate;
 
+            // This processes the objects a second time, which is definitely not optimal, but we need it to compute the density
+            List<DifficultyHitObject> catchHitObjects = SortObjects(CreateDifficultyHitObjects(beatmap, clockRate)).ToList();
+
             CatchDifficultyAttributes attributes = new CatchDifficultyAttributes
             {
                 StarRating = Math.Sqrt(skills[0].DifficultyValue()) * difficulty_multiplier,
                 Mods = mods,
                 ApproachRate = preempt > 1200.0 ? -(preempt - 1800.0) / 120.0 : -(preempt - 1200.0) / 150.0 + 5.0,
                 MaxCombo = beatmap.GetMaxCombo(),
+                Densities = DensityEvaluator.ComputeBeatmapDensities(catchHitObjects),
+                MovementStrains = ((Movement)skills[0]).GetStrains
             };
 
             return attributes;

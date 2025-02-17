@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Collections.Generic;
 using osu.Game.Rulesets.Catch.Difficulty.Preprocessing;
 using osu.Game.Rulesets.Difficulty.Preprocessing;
 using osu.Game.Rulesets.Difficulty.Skills;
@@ -46,6 +47,11 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             //  (perhaps by using IApplicableToRate within the CatchDifficultyHitObject constructor to set a catcher speed for each object before processing)
             catcherSpeedMultiplier = clockRate;
         }
+
+        /// <summary>
+        /// Get the list of all weighted strain values for the movement skill
+        /// </summary>
+        public IReadOnlyList<double> GetStrains => ObjectStrains;
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {
@@ -106,6 +112,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             // To achieve that, we need to store the exact distances (distance ignoring absolute_player_positioning_error and normalized_hitobject_radius)
             if (Math.Abs(exactDistanceMoved) <= HalfCatcherWidth * 2 && exactDistanceMoved == -lastExactDistanceMoved && catchCurrent.StrainTime == lastStrainTime)
             {
+
                 if (isBuzzSliderTriggered)
                     distanceAddition = 0;
                 else isBuzzSliderTriggered = true;
@@ -124,4 +131,5 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             return distanceAddition / weightedStrainTime;
         }
     }
+
 }

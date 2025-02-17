@@ -19,6 +19,10 @@ namespace osu.Game.Rulesets.Catch.Difficulty
         [JsonProperty("approach_rate")]
         public double ApproachRate { get; set; }
 
+        public List<double> Densities { get; set; } = [];
+
+        public IReadOnlyList<double> MovementStrains { get; set; } = [];
+
         public override IEnumerable<(int attributeId, object value)> ToDatabaseAttributes()
         {
             foreach (var v in base.ToDatabaseAttributes())
