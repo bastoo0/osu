@@ -41,6 +41,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
                 StarRating = Math.Sqrt(skills.OfType<Movement>().Single().DifficultyValue()) * difficulty_multiplier,
                 Mods = mods,
                 MaxCombo = beatmap.GetMaxCombo(),
+                MovementDifficultStrainCount = ((StrainSkill)skills[0]).CountTopWeightedStrains(),
             };
 
             return attributes;

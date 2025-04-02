@@ -47,11 +47,10 @@ namespace osu.Game.Rulesets.Catch.Difficulty
                 (numTotalHits > 2500 ? Math.Log10(numTotalHits / 2500.0) * 0.475 : 0.0);
             value *= lengthBonus;
 
-            value *= Math.Pow(0.97, numMiss);
-
-            // Combo scaling
-            if (catchAttributes.MaxCombo > 0)
-                value *= Math.Min(Math.Pow(score.MaxCombo, 0.8) / Math.Pow(catchAttributes.MaxCombo, 0.8), 1.0);
+            if (numMiss > 0)
+            {
+                value *= calculateMissPenalty(numMiss, catchAttributes.MovementDifficultStrainCount);
+            }
 
             var difficulty = score.BeatmapInfo!.Difficulty.Clone();
 
@@ -103,5 +102,10 @@ namespace osu.Game.Rulesets.Catch.Difficulty
         private int totalHits() => num50 + num100 + num300 + numMiss + numKatu;
         private int totalSuccessfulHits() => num50 + num100 + num300;
         private int totalComboHits() => numMiss + num100 + num300;
+
+        // Miss penalty assumes that a player will miss on the hardest parts of a map,
+        // so we use the amount of relatively difficult sections to adjust miss penalty
+        // to make it more punishing on maps with lower amount of hard sections.
+        private double calculateMissPenalty(double missCount, double difficultStrainCount) => 0.96 / ((missCount / (4 * Math.Pow(Math.Log(difficultStrainCount), 0.94))) + 1);
     }
 }
