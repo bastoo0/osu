@@ -36,12 +36,17 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             if (beatmap.HitObjects.Count == 0)
                 return new CatchDifficultyAttributes { Mods = mods };
 
+            var relevantObjects = CatchBeatmap.GetPalpableObjects(beatmap.HitObjects).Where(obj => obj is not Banana).ToList();
+            int tinyDroplets = relevantObjects.Count(o => o is TinyDroplet);
+            double smallTicksRatio = (double)tinyDroplets / relevantObjects.Count;
+
             CatchDifficultyAttributes attributes = new CatchDifficultyAttributes
             {
                 StarRating = Math.Sqrt(skills.OfType<Movement>().Single().DifficultyValue()) * difficulty_multiplier,
                 Mods = mods,
                 MaxCombo = beatmap.GetMaxCombo(),
                 MovementDifficultStrainCount = ((StrainSkill)skills[0]).CountTopWeightedStrains(),
+                SmallTicksRatio = smallTicksRatio,
             };
 
             return attributes;

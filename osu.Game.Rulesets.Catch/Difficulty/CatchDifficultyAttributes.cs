@@ -13,6 +13,9 @@ namespace osu.Game.Rulesets.Catch.Difficulty
         [JsonProperty("movement_difficult_strain_count")]
         public double MovementDifficultStrainCount { get; set; }
 
+        [JsonProperty("small_ticks_ratio")]
+        public double SmallTicksRatio { get; set; }
+
         public override IEnumerable<(int attributeId, object value)> ToDatabaseAttributes()
         {
             foreach (var v in base.ToDatabaseAttributes())
@@ -21,6 +24,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             // Todo: osu!catch should not output star rating in the 'aim' attribute.
             yield return (ATTRIB_ID_AIM, StarRating);
             yield return (ATTRIB_ID_MOVEMENT_DIFFICULT_STRAIN_COUNT, MovementDifficultStrainCount);
+            yield return (ATTRIB_ID_SMALL_TICKS_RATIO, SmallTicksRatio);
         }
 
         public override void FromDatabaseAttributes(IReadOnlyDictionary<int, double> values, IBeatmapOnlineInfo onlineInfo)
@@ -29,6 +33,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 
             StarRating = values[ATTRIB_ID_AIM];
             MovementDifficultStrainCount = values[ATTRIB_ID_MOVEMENT_DIFFICULT_STRAIN_COUNT];
+            SmallTicksRatio = values[ATTRIB_ID_SMALL_TICKS_RATIO];
         }
     }
 }

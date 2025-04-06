@@ -47,10 +47,12 @@ namespace osu.Game.Rulesets.Catch.Difficulty
                 (numTotalHits > 2500 ? Math.Log10(numTotalHits / 2500.0) * 0.475 : 0.0);
             value *= lengthBonus;
 
+            int totalSmallTicks = num50 + numKatu;
+            double dropletsMultiplier = calculateAccuracyMultiplier(numKatu, totalSmallTicks, catchAttributes.SmallTicksRatio);
+            value *= dropletsMultiplier;
+
             if (numMiss > 0)
-            {
                 value *= calculateMissPenalty(numMiss, catchAttributes.MovementDifficultStrainCount);
-            }
 
             var difficulty = score.BeatmapInfo!.Difficulty.Clone();
 
@@ -87,8 +89,6 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             if (score.Mods.Any(m => m is ModFlashlight))
                 value *= 1.35 * lengthBonus;
 
-            value *= Math.Pow(accuracy(), 5.5);
-
             if (score.Mods.Any(m => m is ModNoFail))
                 value *= Math.Max(0.90, 1.0 - 0.02 * numMiss);
 
@@ -107,5 +107,17 @@ namespace osu.Game.Rulesets.Catch.Difficulty
         // so we use the amount of relatively difficult sections to adjust miss penalty
         // to make it more punishing on maps with lower amount of hard sections.
         private double calculateMissPenalty(double missCount, double difficultStrainCount) => 0.95 / ((missCount / (4 * Math.Pow(Math.Log(difficultStrainCount), 2.1))) + 0.98);
+
+        /// <summary>
+        /// Calculates the penalty according to the amount of droplets actually caught.
+        /// This scales to the percentage of small ticks in the beatmap (compared to other relevant hitobjects)
+        /// </summary>
+        private double calculateAccuracyMultiplier(int missedTicks, int totalTicks, double tickPercentage)
+        {
+            if (missedTicks == 0) return 1.0;
+
+            double missRatio = (double)missedTicks / (totalTicks + 1);
+            return Math.Pow(1.0 - Math.Pow(missRatio, 0.6), tickPercentage);
+        }
     }
 }
