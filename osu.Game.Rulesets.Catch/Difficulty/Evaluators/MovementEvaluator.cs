@@ -59,6 +59,30 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                                     * Math.Max(0.35, 1 - weightedStrainTime / 900);
             }
 
+            if (current.Index >= 2
+                && Math.Abs(catchCurrent.DistanceMoved) > 0.1
+                && Math.Abs(catchLast.DistanceMoved) > 0.1
+                && Math.Abs(catchLastLast.DistanceMoved) > 0.1
+                && Math.Sign(catchCurrent.DistanceMoved) == Math.Sign(catchLast.DistanceMoved)
+                && Math.Sign(catchCurrent.DistanceMoved) == Math.Sign(catchLastLast.DistanceMoved))
+            {
+                double travelPressure = Math.Max(0, Math.Abs(catchCurrent.ExactDistanceMoved) - Math.Abs(catchCurrent.DistanceMoved))
+                                       + Math.Max(0, Math.Abs(catchLast.ExactDistanceMoved) - Math.Abs(catchLast.DistanceMoved))
+                                       + Math.Max(0, Math.Abs(catchLastLast.ExactDistanceMoved) - Math.Abs(catchLastLast.DistanceMoved));
+
+                if (travelPressure > CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 0.8)
+                {
+                    double sweepDistance = (Math.Abs(catchCurrent.DistanceMoved) + Math.Abs(catchLast.DistanceMoved) + Math.Abs(catchLastLast.DistanceMoved))
+                                           / (CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 3);
+                    double normalizedTravelPressure = travelPressure / (CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 2.4);
+
+                    distanceAddition += 3.6 * Math.Pow(normalizedTravelPressure, 1.1)
+                                        * Math.Pow(sweepDistance, 0.8)
+                                        / Math.Sqrt(catchLastLast.StrainTime + 24)
+                                        * Math.Max(0.25, 1 - (weightedStrainTime + catchLast.StrainTime) / 1050);
+                }
+            }
+
             // Bonus for edge dashes.
             if (catchCurrent.LastObject.DistanceToHyperDash <= 20.0f)
             {
