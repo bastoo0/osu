@@ -22,10 +22,12 @@ namespace osu.Game.Rulesets.Catch.Difficulty
     public class CatchDifficultyCalculator : DifficultyCalculator
     {
         private const double difficulty_multiplier = 4.59;
-        private const double star_rating_scale = 0.7615471491159566;
-        private const double star_rating_offset = 1.675298457672687;
+        private const double star_rating_offset = 1.8173492171223342;
+        private const double star_rating_scale = 0.7156178859114426;
+        private const double high_star_rating_threshold = 5.9;
+        private const double high_star_rating_scale = 0.1655420758139077;
 
-        public override int Version => 20260412;
+        public override int Version => 2026041201;
 
         public CatchDifficultyCalculator(IRulesetInfo ruleset, IWorkingBeatmap beatmap)
             : base(ruleset, beatmap)
@@ -41,7 +43,8 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 
             CatchDifficultyAttributes attributes = new CatchDifficultyAttributes
             {
-                StarRating = star_rating_offset + star_rating_scale * baseStarRating,
+                StarRating = star_rating_offset + star_rating_scale * baseStarRating
+                             + high_star_rating_scale * Math.Max(0, baseStarRating - high_star_rating_threshold),
                 Mods = mods,
                 MaxCombo = beatmap.GetMaxCombo(),
             };
