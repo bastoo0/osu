@@ -34,8 +34,14 @@ namespace osu.Game.Rulesets.Catch.Difficulty
         private const double post_mid_star_rating_scale = -0.1528625544019533;
         private const double post_high_star_rating_threshold = 6.1;
         private const double post_high_star_rating_scale = 0.15545684501151255;
+        private const double final_star_rating_offset = 0.006480181770084935;
+        private const double final_star_rating_scale = 0.9881000895293754;
+        private const double final_mid_star_rating_threshold = 6.0;
+        private const double final_mid_star_rating_scale = 0.082963137880052;
+        private const double final_high_star_rating_threshold = 8.2;
+        private const double final_high_star_rating_scale = -0.4712683245047666;
 
-        public override int Version => 2026041204;
+        public override int Version => 2026041205;
 
         public CatchDifficultyCalculator(IRulesetInfo ruleset, IWorkingBeatmap beatmap)
             : base(ruleset, beatmap)
@@ -51,12 +57,15 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             double calibratedStarRating = star_rating_offset + star_rating_scale * baseStarRating
                                           + mid_star_rating_scale * Math.Max(0, baseStarRating - mid_star_rating_threshold)
                                           + high_star_rating_scale * Math.Max(0, baseStarRating - high_star_rating_threshold);
+            double postCalibratedStarRating = post_star_rating_offset + post_star_rating_scale * calibratedStarRating
+                                              + post_mid_star_rating_scale * Math.Max(0, calibratedStarRating - post_mid_star_rating_threshold)
+                                              + post_high_star_rating_scale * Math.Max(0, calibratedStarRating - post_high_star_rating_threshold);
 
             CatchDifficultyAttributes attributes = new CatchDifficultyAttributes
             {
-                StarRating = post_star_rating_offset + post_star_rating_scale * calibratedStarRating
-                             + post_mid_star_rating_scale * Math.Max(0, calibratedStarRating - post_mid_star_rating_threshold)
-                             + post_high_star_rating_scale * Math.Max(0, calibratedStarRating - post_high_star_rating_threshold),
+                StarRating = final_star_rating_offset + final_star_rating_scale * postCalibratedStarRating
+                             + final_mid_star_rating_scale * Math.Max(0, postCalibratedStarRating - final_mid_star_rating_threshold)
+                             + final_high_star_rating_scale * Math.Max(0, postCalibratedStarRating - final_high_star_rating_threshold),
                 Mods = mods,
                 MaxCombo = beatmap.GetMaxCombo(),
             };
