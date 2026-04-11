@@ -44,6 +44,21 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                                     / (CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 6) / sqrtStrain;
             }
 
+            if (current.Index >= 2
+                && Math.Abs(catchCurrent.DistanceMoved) > 0.1
+                && Math.Abs(catchLast.DistanceMoved) > 0.1
+                && Math.Abs(catchLastLast.DistanceMoved) > 0.1
+                && Math.Sign(catchCurrent.DistanceMoved) == Math.Sign(catchLastLast.DistanceMoved)
+                && Math.Sign(catchCurrent.DistanceMoved) != Math.Sign(catchLast.DistanceMoved))
+            {
+                double reversalDistance = (Math.Abs(catchCurrent.DistanceMoved) + Math.Abs(catchLast.DistanceMoved) + Math.Abs(catchLastLast.DistanceMoved))
+                                          / (CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 3);
+
+                distanceAddition += 4.2 * Math.Pow(reversalDistance, 1.15)
+                                    / Math.Sqrt(catchLastLast.StrainTime + 20)
+                                    * Math.Max(0.35, 1 - weightedStrainTime / 900);
+            }
+
             // Bonus for edge dashes.
             if (catchCurrent.LastObject.DistanceToHyperDash <= 20.0f)
             {
