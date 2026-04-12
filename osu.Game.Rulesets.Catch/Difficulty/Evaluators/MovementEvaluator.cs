@@ -21,7 +21,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
             // but also the speed of the player's catcher, which has an impact on difficulty
             double catcherSpeedMultiplier = current.ClockRate;
 
-            double weightedStrainTime = catchCurrent.StrainTime + 15 + (3 / catcherSpeedMultiplier);
+            double weightedStrainTime = catchCurrent.StrainTime + 15 + (3 / catcherSpeedMultiplier) + Math.Max(0, 50 - Math.Abs(catchCurrent.DistanceMoved)) * 0.1;
 
             double distanceAddition = (Math.Abs(catchCurrent.DistanceMoved) / 5000);
             double sqrtStrain = Math.Sqrt(weightedStrainTime);
@@ -123,6 +123,28 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                               / Math.Min(catchCurrent.StrainTime, catchLast.StrainTime);
                 if (tRatio > 1.5)
                     distanceAddition *= 1.0 + 0.15 * Math.Min(tRatio - 1.0, 3.0);
+            }
+
+            // Playfield coverage: movement spanning large portion of field is harder
+            if (current.Index >= 2)
+            {
+                double minX = Math.Min(Math.Min(catchCurrent.LastObject.EffectiveX, catchLast.LastObject.EffectiveX), catchLastLast.LastObject.EffectiveX);
+                double maxX = Math.Max(Math.Max(catchCurrent.LastObject.EffectiveX, catchLast.LastObject.EffectiveX), catchLastLast.LastObject.EffectiveX);
+                double coverage = (maxX - minX) / 512.0;
+                if (coverage > 0.5)
+                    distanceAddition += 2.0 * (coverage - 0.5) / sqrtStrain;
+            }
+
+            // Distance variance: inconsistent movement distances are harder
+            if (current.Index >= 2)
+            {
+                double d0 = Math.Abs(catchCurrent.DistanceMoved);
+                double d1 = Math.Abs(catchLast.DistanceMoved);
+                double d2 = Math.Abs(catchLastLast.DistanceMoved);
+                double mean = (d0 + d1 + d2) / 3;
+                double variance = ((d0-mean)*(d0-mean) + (d1-mean)*(d1-mean) + (d2-mean)*(d2-mean)) / 3;
+                if (mean > 10)
+                    distanceAddition += 0.5 * Math.Sqrt(variance) / (mean * sqrtStrain);
             }
 
             // There is an edge case where horizontal back and forth sliders create "buzz" patterns which are repeated "movements" with a distance lower than
