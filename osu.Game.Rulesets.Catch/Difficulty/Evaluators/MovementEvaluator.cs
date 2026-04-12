@@ -9,7 +9,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
 {
     public static class MovementEvaluator
     {
-        private const double direction_change_bonus = 21.0;
+        private const double direction_change_bonus = 8.0;
 
         public static double EvaluateDifficultyOf(DifficultyHitObject current)
         {
@@ -40,7 +40,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                 }
 
                 // Base bonus for every movement, giving some weight to streams.
-                distanceAddition += 12.5 * Math.Min(Math.Abs(catchCurrent.DistanceMoved), CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 2)
+                distanceAddition += 25.0 * Math.Min(Math.Abs(catchCurrent.DistanceMoved), CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 2)
                                     / (CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 6) / sqrtStrain;
             }
 
