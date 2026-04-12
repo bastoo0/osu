@@ -126,32 +126,6 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                     distanceAddition *= 1.0 + 0.15 * Math.Min(tRatio - 1.0, 3.0);
             }
 
-            // Small platters amplify reading-heavy patterns more than plain movement.
-            if (precisionPressure > 0 && current.Index >= 2)
-            {
-                double edgeProximity = Math.Max(0.0, Math.Abs(catchCurrent.LastObject.EffectiveX - 256) / 256.0 - 0.55) / 0.45;
-                double minX = Math.Min(Math.Min(catchCurrent.LastObject.EffectiveX, catchLast.LastObject.EffectiveX), catchLastLast.LastObject.EffectiveX);
-                double maxX = Math.Max(Math.Max(catchCurrent.LastObject.EffectiveX, catchLast.LastObject.EffectiveX), catchLastLast.LastObject.EffectiveX);
-                double coverage = (maxX - minX) / 512.0;
-
-                if (edgeProximity > 0 && catchCurrent.StrainTime < 220 && Math.Abs(catchCurrent.DistanceMoved) > CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 0.6)
-                    distanceAddition += 0.6 * precisionPressure * edgeProximity / sqrtStrain;
-
-                if (coverage > 0.55 && catchCurrent.StrainTime < 260)
-                    distanceAddition += 1.4 * precisionPressure * (coverage - 0.55) / sqrtStrain;
-
-                if (Math.Abs(catchCurrent.DistanceMoved) > 0.1
-                    && Math.Abs(catchLast.DistanceMoved) > 0.1
-                    && Math.Abs(catchLastLast.DistanceMoved) > 0.1
-                    && Math.Sign(catchCurrent.DistanceMoved) == Math.Sign(catchLastLast.DistanceMoved)
-                    && Math.Sign(catchCurrent.DistanceMoved) != Math.Sign(catchLast.DistanceMoved))
-                {
-                    double reversalSize = Math.Min(Math.Abs(catchCurrent.DistanceMoved), CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 2)
-                                          / (CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 2);
-                    distanceAddition += 1.0 * precisionPressure * reversalSize / Math.Sqrt(catchLastLast.StrainTime + 20);
-                }
-            }
-
             // Playfield coverage: movement spanning large portion of field is harder
             if (current.Index >= 2)
             {

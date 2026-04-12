@@ -22,24 +22,24 @@ namespace osu.Game.Rulesets.Catch.Difficulty
     public class CatchDifficultyCalculator : DifficultyCalculator
     {
         private const double difficulty_multiplier = 4.59;
-        private const double star_rating_offset = 0.5893894644967759;
-        private const double star_rating_scale = 0.8388121649031537;
-        private const double mid_star_rating_threshold = 1.1745076407861872;
-        private const double mid_star_rating_scale = -0.49262713481817816;
-        private const double high_star_rating_threshold = 2.1231747341390435;
-        private const double high_star_rating_scale = 0.6840368136066675;
-        private const double post_star_rating_offset = 0.005750933494668009;
-        private const double post_star_rating_scale = 1.7317295498840903;
-        private const double post_mid_star_rating_threshold = 13.297939221753847;
-        private const double post_mid_star_rating_scale = -0.18277635679486148;
-        private const double post_high_star_rating_threshold = 1.248975328307481;
-        private const double post_high_star_rating_scale = 1.0751444531061431;
-        private const double final_star_rating_offset = 0.007546036493018618;
-        private const double final_star_rating_scale = 1.2992724554788035;
-        private const double final_mid_star_rating_threshold = 4.878353089600681;
-        private const double final_mid_star_rating_scale = -0.18735102950324944;
-        private const double final_high_star_rating_threshold = 7.03261123486574;
-        private const double final_high_star_rating_scale = -0.8684384531704483;
+        private const double star_rating_offset = 1.6432140909207456;
+        private const double star_rating_scale = 2.053958135448436;
+        private const double mid_star_rating_threshold = 1.250774072641559;
+        private const double mid_star_rating_scale = -0.9835252025826999;
+        private const double high_star_rating_threshold = 2.1038465327932054;
+        private const double high_star_rating_scale = 1.813889616813292;
+        private const double post_star_rating_offset = -0.02561905262590085;
+        private const double post_star_rating_scale = 1.025479644418855;
+        private const double post_mid_star_rating_threshold = 3.248100851861347;
+        private const double post_mid_star_rating_scale = 0.7209109211049314;
+        private const double post_high_star_rating_threshold = 7.890436972079399;
+        private const double post_high_star_rating_scale = -0.49930677680883506;
+        private const double final_star_rating_offset = -0.04369969701291737;
+        private const double final_star_rating_scale = 0.8615253971757055;
+        private const double final_mid_star_rating_threshold = 4.260167379065061;
+        private const double final_mid_star_rating_scale = -0.188388025248851;
+        private const double final_high_star_rating_threshold = 11.937187104256584;
+        private const double final_high_star_rating_scale = -0.49370116584148604;
 
         public override int Version => 2026041205;
 
@@ -53,7 +53,9 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             if (beatmap.HitObjects.Count == 0)
                 return new CatchDifficultyAttributes { Mods = mods };
 
-            double baseStarRating = Math.Sqrt(skills.OfType<HarmonicMovement>().Single().DifficultyValue()) * difficulty_multiplier;
+            double movement = skills.OfType<HarmonicMovement>().Single().DifficultyValue();
+            double precisionPatterns = skills.OfType<PrecisionPatterns>().Single().DifficultyValue();
+            double baseStarRating = Math.Sqrt(movement) * difficulty_multiplier * (1 + 0.060 * Math.Sqrt(precisionPatterns));
             double calibratedStarRating = star_rating_offset + star_rating_scale * baseStarRating
                                           + mid_star_rating_scale * Math.Max(0, baseStarRating - mid_star_rating_threshold)
                                           + high_star_rating_scale * Math.Max(0, baseStarRating - high_star_rating_threshold);
@@ -107,6 +109,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             return new Skill[]
             {
                 new HarmonicMovement(mods),
+                new PrecisionPatterns(mods),
             };
         }
 
