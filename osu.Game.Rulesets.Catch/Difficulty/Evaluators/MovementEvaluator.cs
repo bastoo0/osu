@@ -21,7 +21,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
             // but also the speed of the player's catcher, which has an impact on difficulty
             double catcherSpeedMultiplier = current.ClockRate;
 
-            double weightedStrainTime = catchCurrent.StrainTime + 13 + (3 / catcherSpeedMultiplier);
+            double weightedStrainTime = catchCurrent.StrainTime + 15 + (3 / catcherSpeedMultiplier);
 
             double distanceAddition = (Math.Abs(catchCurrent.DistanceMoved) / 3500);
             double sqrtStrain = Math.Sqrt(weightedStrainTime);
