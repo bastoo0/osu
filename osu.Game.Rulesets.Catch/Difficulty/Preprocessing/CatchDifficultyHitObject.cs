@@ -59,11 +59,18 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Preprocessing
         /// </summary>
         public readonly double StrainTime;
 
+        /// <summary>
+        /// Scale applied to normalize movement for the current catcher width.
+        /// Higher values correspond to smaller platters and higher precision demand.
+        /// </summary>
+        public readonly float CatcherWidthScale;
+
         public CatchDifficultyHitObject(HitObject hitObject, HitObject lastObject, double clockRate, float halfCatcherWidth, List<DifficultyHitObject> objects, int index)
             : base(hitObject, lastObject, clockRate, objects, index)
         {
             // We will scale everything by this factor, so we can assume a uniform CircleSize among beatmaps.
             float scalingFactor = NORMALIZED_HALF_CATCHER_WIDTH / halfCatcherWidth;
+            CatcherWidthScale = scalingFactor;
 
             NormalizedPosition = BaseObject.EffectiveX * scalingFactor;
             LastNormalizedPosition = LastObject.EffectiveX * scalingFactor;
