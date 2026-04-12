@@ -116,6 +116,15 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                     distanceAddition += 1.5 / sqrtStrain;
             }
 
+            // Rhythm complexity: irregular timing is harder
+            if (current.Index >= 1 && catchLast.StrainTime > 1)
+            {
+                double tRatio = Math.Max(catchCurrent.StrainTime, catchLast.StrainTime)
+                              / Math.Min(catchCurrent.StrainTime, catchLast.StrainTime);
+                if (tRatio > 1.5)
+                    distanceAddition *= 1.0 + 0.15 * Math.Min(tRatio - 1.0, 3.0);
+            }
+
             // There is an edge case where horizontal back and forth sliders create "buzz" patterns which are repeated "movements" with a distance lower than
             // the platter's width but high enough to be considered a movement due to the absolute_player_positioning_error and NORMALIZED_HALF_CATCHER_WIDTH offsets
             // We are detecting this exact scenario. The first back and forth is counted but all subsequent ones are nullified.
