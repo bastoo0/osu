@@ -100,6 +100,22 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                                                         * Math.Pow((Math.Min(catchCurrent.StrainTime * catcherSpeedMultiplier, 265) / 265), 1.5); // Edge Dashes are easier at lower ms values
             }
 
+            // Cumulative direction changes in last 4 objects
+            if (current.Index >= 3)
+            {
+                var catchPrev3 = (CatchDifficultyHitObject)current.Previous(2);
+                int dcCount = 0;
+
+                if (Math.Sign(catchCurrent.DistanceMoved) != Math.Sign(catchLast.DistanceMoved)) dcCount++;
+                if (Math.Sign(catchLast.DistanceMoved) != Math.Sign(catchLastLast.DistanceMoved)) dcCount++;
+                if (Math.Sign(catchLastLast.DistanceMoved) != Math.Sign(catchPrev3.DistanceMoved)) dcCount++;
+
+                if (dcCount >= 3)
+                    distanceAddition += 3.0 / sqrtStrain;
+                else if (dcCount >= 2)
+                    distanceAddition += 1.5 / sqrtStrain;
+            }
+
             // There is an edge case where horizontal back and forth sliders create "buzz" patterns which are repeated "movements" with a distance lower than
             // the platter's width but high enough to be considered a movement due to the absolute_player_positioning_error and NORMALIZED_HALF_CATCHER_WIDTH offsets
             // We are detecting this exact scenario. The first back and forth is counted but all subsequent ones are nullified.
