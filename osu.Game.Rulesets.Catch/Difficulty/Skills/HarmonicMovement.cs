@@ -17,8 +17,8 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
     /// </summary>
     public class HarmonicMovement : Skill
     {
-        private const double harmonic_scale = 20.0;
-        private const double decay_exponent = 0.9;
+        private const double harmonic_scale = 13.0;
+        private const double decay_exponent = 0.8;
 
         public HarmonicMovement(Mod[] mods)
             : base(mods)
