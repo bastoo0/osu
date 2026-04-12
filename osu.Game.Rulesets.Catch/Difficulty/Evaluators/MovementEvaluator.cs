@@ -23,7 +23,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
 
             double weightedStrainTime = catchCurrent.StrainTime + 13 + (3 / catcherSpeedMultiplier);
 
-            double distanceAddition = (Math.Pow(Math.Abs(catchCurrent.DistanceMoved), 1.15) / 2000);
+            double distanceAddition = (Math.Pow(Math.Abs(catchCurrent.DistanceMoved), 1.15) / 3500);
             double sqrtStrain = Math.Sqrt(weightedStrainTime);
 
             double edgeDashBonus = 0;
@@ -102,7 +102,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                                    && catchCurrent.StrainTime == catchLast.StrainTime && catchLast.StrainTime == catchLastLast.StrainTime)
                 distanceAddition = 0;
 
-            return distanceAddition / weightedStrainTime;
+            return distanceAddition / Math.Pow(weightedStrainTime, 1.05);
         }
     }
 }
