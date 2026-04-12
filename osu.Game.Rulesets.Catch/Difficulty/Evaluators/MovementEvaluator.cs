@@ -157,7 +157,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                                    && catchCurrent.StrainTime == catchLast.StrainTime && catchLast.StrainTime == catchLastLast.StrainTime)
                 distanceAddition = 0;
 
-            return distanceAddition * (1.0 + 0.12 * precisionPressure) / Math.Pow(weightedStrainTime, 1.05);
+            return distanceAddition * (1.0 + 0.16 * precisionPressure) / Math.Pow(weightedStrainTime, 1.05);
         }
     }
 }
