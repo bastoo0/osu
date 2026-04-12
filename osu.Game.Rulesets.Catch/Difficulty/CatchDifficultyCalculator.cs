@@ -22,24 +22,24 @@ namespace osu.Game.Rulesets.Catch.Difficulty
     public class CatchDifficultyCalculator : DifficultyCalculator
     {
         private const double difficulty_multiplier = 4.59;
-        private const double star_rating_offset = 0.6286697245283324;
-        private const double star_rating_scale = 1.645264667829277;
-        private const double mid_star_rating_threshold = 1.3080504592905289;
-        private const double mid_star_rating_scale = -0.7812074864612337;
-        private const double high_star_rating_threshold = 2.1235482009325195;
-        private const double high_star_rating_scale = 1.5913774112879717;
-        private const double post_star_rating_offset = 0.16372263414247135;
-        private const double post_star_rating_scale = 1.1631526869968658;
-        private const double post_mid_star_rating_threshold = 5.186374145490211;
-        private const double post_mid_star_rating_scale = -0.6729089083764233;
-        private const double post_high_star_rating_threshold = 5.4575014947563165;
-        private const double post_high_star_rating_scale = 0.6874460593201555;
-        private const double final_star_rating_offset = -0.04609982279934653;
-        private const double final_star_rating_scale = 1.246201144699095;
-        private const double final_mid_star_rating_threshold = 7.898635999981888;
-        private const double final_mid_star_rating_scale = 0.06634560910254761;
-        private const double final_high_star_rating_threshold = 7.125234383640286;
-        private const double final_high_star_rating_scale = -1.0866060076783564;
+        private const double star_rating_offset = 0.7405615942304129;
+        private const double star_rating_scale = 1.4239986313809363;
+        private const double mid_star_rating_threshold = 1.4071499919129962;
+        private const double mid_star_rating_scale = -0.26610729001754374;
+        private const double high_star_rating_threshold = 2.1222379537148286;
+        private const double high_star_rating_scale = 2.7081282028282736;
+        private const double post_star_rating_offset = -0.12005297481493118;
+        private const double post_star_rating_scale = 1.1826177334930694;
+        private const double post_mid_star_rating_threshold = 23.931464158983633;
+        private const double post_mid_star_rating_scale = 0.457265218076388;
+        private const double post_high_star_rating_threshold = 4.4764702666111855;
+        private const double post_high_star_rating_scale = -0.22987942511168252;
+        private const double final_star_rating_offset = -0.001116168556188194;
+        private const double final_star_rating_scale = 1.4192953359787417;
+        private const double final_mid_star_rating_threshold = 2.941589039318325;
+        private const double final_mid_star_rating_scale = -0.548116897610821;
+        private const double final_high_star_rating_threshold = 8.266653760865402;
+        private const double final_high_star_rating_scale = -0.7103312865756721;
 
         public override int Version => 2026041205;
 
