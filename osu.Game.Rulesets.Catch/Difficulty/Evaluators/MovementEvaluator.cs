@@ -36,7 +36,13 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                     double bonusFactor = Math.Min(50, Math.Abs(catchCurrent.DistanceMoved)) / 50;
                     double antiflowFactor = Math.Max(Math.Min(70, Math.Abs(catchLast.DistanceMoved)) / 70, 0.38);
 
-                    distanceAddition += direction_change_bonus / Math.Sqrt(catchLast.StrainTime + 16) * bonusFactor * antiflowFactor * Math.Max(1 - Math.Pow(weightedStrainTime / 1000, 3), 0);
+                    // Consecutive direction changes are harder: 1.5x when previous was also a direction change
+                    double dcMultiplier = 1.0;
+
+                    if (current.Index >= 2 && Math.Sign(catchLast.DistanceMoved) != Math.Sign(catchLastLast.DistanceMoved))
+                        dcMultiplier = 1.5;
+
+                    distanceAddition += direction_change_bonus * dcMultiplier / Math.Sqrt(catchLast.StrainTime + 16) * bonusFactor * antiflowFactor * Math.Max(1 - Math.Pow(weightedStrainTime / 1000, 3), 0);
                 }
 
                 // Base bonus for every movement, giving some weight to streams.
