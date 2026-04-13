@@ -112,7 +112,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                 if (Math.Sign(catchLastLast.DistanceMoved) != Math.Sign(catchPrev3.DistanceMoved)) dcCount++;
 
                 if (dcCount >= 2)
-                    distanceAddition += 0.7 / sqrtStrain;
+                    distanceAddition += 0.0 / sqrtStrain;
             }
 
             // Rhythm complexity: irregular timing is harder
