@@ -50,6 +50,11 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
         /// </summary>
         public double DifficultyMass { get; private set; }
 
+        /// <summary>
+        /// Ratio of top-5% mean difficulty to median difficulty. Higher = spikier map.
+        /// </summary>
+        public double Spikiness { get; private set; }
+
         private readonly int[] positionBinCounts = new int[position_bins];
         private int totalTrackedObjects;
         private int directionChangeCount;
@@ -118,6 +123,16 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
                 double p90 = sorted[(int)(sorted.Length * 0.9)];
                 SustainedRatio = p90 > 0 ? median / p90 : 0;
                 MedianDifficulty = median;
+
+                // Spikiness: ratio of top 5% mean to median
+                int top5Start = (int)(sorted.Length * 0.95);
+                double top5Mean = 0;
+
+                for (int i = top5Start; i < sorted.Length; i++)
+                    top5Mean += sorted[i];
+
+                top5Mean /= Math.Max(1, sorted.Length - top5Start);
+                Spikiness = median > 0 ? top5Mean / median : 0;
             }
 
             // Compute position entropy
