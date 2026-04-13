@@ -17,7 +17,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
     /// </summary>
     public class HarmonicMovement : Skill
     {
-        private const double harmonic_scale = 13.0;
+        private const double base_harmonic_scale = 13.0;
         private const double decay_exponent = 0.8;
 
         public HarmonicMovement(Mod[] mods)
@@ -37,16 +37,25 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
 
             double[] difficulties = ObjectDifficulties.Where(p => p > 0).ToArray();
 
+            // Dual adaptive: both harmonic scale and decay exponent adjust based on
+            // the number of contributing objects. Longer maps get wider weighting windows
+            // AND more even weighting across objects, boosting sustained difficulty.
+            double lengthRatio = difficulties.Length / 1000.0;
+            double adaptiveScale = base_harmonic_scale * Math.Pow(lengthRatio, 0.15);
+            double adaptiveDecay = decay_exponent;
+
             foreach (double note in difficulties.OrderDescending())
             {
-                double weight = (1 + (harmonic_scale / (1 + index)))
-                                / (Math.Pow(index, decay_exponent) + 1 + (harmonic_scale / (1 + index)));
+                double weight = (1 + (adaptiveScale / (1 + index)))
+                                / (Math.Pow(index, adaptiveDecay) + 1 + (adaptiveScale / (1 + index)));
 
                 difficulty += note * weight;
                 index++;
             }
 
-            return difficulty;
+            // Length scaling: longer maps have more sustained difficulty
+            double lengthBonus = 1 + 0.05 * Math.Log(Math.Max(difficulties.Length, 1));
+            return difficulty * lengthBonus;
         }
     }
 }

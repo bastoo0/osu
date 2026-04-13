@@ -9,7 +9,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
 {
     public static class MovementEvaluator
     {
-        private const double direction_change_bonus = 5.0;
+        private const double direction_change_bonus = 3.5;
 
         public static double EvaluateDifficultyOf(DifficultyHitObject current)
         {
@@ -41,7 +41,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                     double dcMultiplier = 1.0;
 
                     if (current.Index >= 2 && Math.Sign(catchLast.DistanceMoved) != Math.Sign(catchLastLast.DistanceMoved))
-                        dcMultiplier = 1.5;
+                        dcMultiplier = 1.2;
 
                     distanceAddition += direction_change_bonus * dcMultiplier / Math.Sqrt(catchLast.StrainTime + 16) * bonusFactor * antiflowFactor * Math.Max(1 - Math.Pow(weightedStrainTime / 1000, 3), 0);
                 }
@@ -62,7 +62,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                 double reversalDistance = (Math.Abs(catchCurrent.DistanceMoved) + Math.Abs(catchLast.DistanceMoved) + Math.Abs(catchLastLast.DistanceMoved))
                                           / (CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 3);
 
-                distanceAddition += 4.2 * Math.Pow(reversalDistance, 1.15)
+                distanceAddition += 6.0 * Math.Pow(reversalDistance, 1.15)
                                     / Math.Sqrt(catchLastLast.StrainTime + 20)
                                     * Math.Max(0.35, 1 - weightedStrainTime / 600);
             }
@@ -84,7 +84,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                                            / (CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 3);
                     double normalizedTravelPressure = travelPressure / (CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 2.4);
 
-                    distanceAddition += 3.6 * Math.Pow(normalizedTravelPressure, 1.1)
+                    distanceAddition += 5.0 * Math.Pow(normalizedTravelPressure, 1.1)
                                         * Math.Pow(sweepDistance, 0.8)
                                         / Math.Sqrt(catchLastLast.StrainTime + 24)
                                         * Math.Max(0.25, 1 - (weightedStrainTime + catchLast.StrainTime) / 1800);
