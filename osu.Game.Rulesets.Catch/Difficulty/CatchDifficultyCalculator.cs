@@ -22,24 +22,24 @@ namespace osu.Game.Rulesets.Catch.Difficulty
     public class CatchDifficultyCalculator : DifficultyCalculator
     {
         private const double difficulty_multiplier = 4.59;
-        private const double star_rating_offset = 0.7572404287574261;
-        private const double star_rating_scale = 1.07356781867185;
-        private const double mid_star_rating_threshold = 1.5890691262613121;
-        private const double mid_star_rating_scale = -0.5512378750868354;
-        private const double high_star_rating_threshold = 2.749551252423327;
-        private const double high_star_rating_scale = 0.9911592686109302;
-        private const double post_star_rating_offset = 0.1829733626931694;
-        private const double post_star_rating_scale = 1.3165209391763957;
-        private const double post_mid_star_rating_threshold = 3.830092635085043;
-        private const double post_mid_star_rating_scale = -0.34192799827563697;
-        private const double post_high_star_rating_threshold = 1.8133803986693624;
-        private const double post_high_star_rating_scale = 0.2885571008806256;
-        private const double final_star_rating_offset = 0.06466120221811053;
-        private const double final_star_rating_scale = 1.0682789628652847;
-        private const double final_mid_star_rating_threshold = 2.6435410435025286;
-        private const double final_mid_star_rating_scale = 0.15610195112060657;
-        private const double final_high_star_rating_threshold = 7.463690376430094;
-        private const double final_high_star_rating_scale = -0.5876801940291363;
+        private const double star_rating_offset = 0.7353882053291837;
+        private const double star_rating_scale = 1.0183148703617986;
+        private const double mid_star_rating_threshold = 1.6378905527549543;
+        private const double mid_star_rating_scale = -0.5331522758489995;
+        private const double high_star_rating_threshold = 2.6656623028742112;
+        private const double high_star_rating_scale = 0.9640018631977697;
+        private const double post_star_rating_offset = 0.1475666984885004;
+        private const double post_star_rating_scale = 1.3964389908326045;
+        private const double post_mid_star_rating_threshold = 3.786579896403968;
+        private const double post_mid_star_rating_scale = -0.3815795483815219;
+        private const double post_high_star_rating_threshold = 1.7173707760926886;
+        private const double post_high_star_rating_scale = 0.2852689373616327;
+        private const double final_star_rating_offset = 0.04318480119747029;
+        private const double final_star_rating_scale = 1.0844945133028046;
+        private const double final_mid_star_rating_threshold = 2.548722388935998;
+        private const double final_mid_star_rating_scale = 0.11439323131313006;
+        private const double final_high_star_rating_threshold = 7.809107675758563;
+        private const double final_high_star_rating_scale = -0.8777971890817571;
 
         public override int Version => 2026041205;
 
@@ -68,14 +68,14 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             // For very high movement maps, sustained difficulty indicates predictable zigzag
             // which is less difficult than varied patterns at the same speed
             double movementExcess = Math.Max(0, movement - 0.55) / 0.35;
-            double sustainedModifier = 1 + 0.10 * sustainedRatio * (1 - movementExcess);
+            double sustainedModifier = 1 + 0.13 * sustainedRatio * (1 - movementExcess);
 
             // High sustained-movement with low direction-change ratio indicates wide predictable flow
             double sustainedMovementScore = movement * (1 - directionChangeRatio);
             double smsPenalty = 1 - 0.55 * Math.Max(0, sustainedMovementScore - 0.40);
 
             // Spikiness penalty: maps dominated by a few hard objects are overrated
-            double consistencyBonus = 1 + 0.10 * sustainedRatio * Math.Max(0, 3.5 - spikiness) / 3.5;
+            double consistencyBonus = 1 + 0.13 * sustainedRatio * Math.Max(0, 3.5 - spikiness) / 3.5;
             double spikyPenalty = 1.0 / (1.0 + 0.020 * Math.Max(0, spikiness - 3.9));
 
             // Blend harmonic peak difficulty with total difficulty mass
