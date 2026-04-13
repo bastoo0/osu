@@ -39,6 +39,17 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
         /// </summary>
         public double DirectionChangeRatio { get; private set; }
 
+        /// <summary>
+        /// Median per-object difficulty value.
+        /// </summary>
+        public double MedianDifficulty { get; private set; }
+
+        /// <summary>
+        /// Total sum of per-object difficulties divided by sqrt(object count).
+        /// Captures total difficulty mass of the map, not just peaks.
+        /// </summary>
+        public double DifficultyMass { get; private set; }
+
         private readonly int[] positionBinCounts = new int[position_bins];
         private int totalTrackedObjects;
         private int directionChangeCount;
@@ -106,6 +117,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
                 double median = sorted[sorted.Length / 2];
                 double p90 = sorted[(int)(sorted.Length * 0.9)];
                 SustainedRatio = p90 > 0 ? median / p90 : 0;
+                MedianDifficulty = median;
             }
 
             // Compute position entropy
@@ -128,6 +140,10 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             // Compute direction change ratio
             if (movingObjectCount > 10)
                 DirectionChangeRatio = (double)directionChangeCount / movingObjectCount;
+
+            // Compute difficulty mass: total difficulty / sqrt(count)
+            if (difficulties.Length > 0)
+                DifficultyMass = difficulties.Sum() / Math.Sqrt(difficulties.Length);
 
             return difficulty * lengthBonus;
         }
