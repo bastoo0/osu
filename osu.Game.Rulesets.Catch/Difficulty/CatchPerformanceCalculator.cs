@@ -43,8 +43,8 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             int numTotalHits = totalComboHits();
 
             double lengthBonus =
-                0.95 + 0.3 * Math.Min(1.0, numTotalHits / 2500.0) +
-                (numTotalHits > 2500 ? Math.Log10(numTotalHits / 2500.0) * 0.475 : 0.0);
+                0.95 + 0.285 * Math.Min(1.0, numTotalHits / 2500.0) +
+                (numTotalHits > 2500 ? Math.Log10(numTotalHits / 2500.0) * 0.44 : 0.0);
             value *= lengthBonus;
 
             value *= Math.Pow(0.97, numMiss);
@@ -64,6 +64,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 
             double approachRate = preempt > 1200.0 ? -(preempt - 1800.0) / 120.0 : -(preempt - 1200.0) / 150.0 + 5.0;
 
+            bool hasDoubleTime = score.Mods.Any(m => m is ModDoubleTime or ModNightcore);
             double approachRateFactor = 1.0;
             if (approachRate > 9.0)
                 approachRateFactor += 0.1 * (approachRate - 9.0); // 10% for each AR above 9
@@ -71,6 +72,9 @@ namespace osu.Game.Rulesets.Catch.Difficulty
                 approachRateFactor += 0.1 * (approachRate - 10.0); // Additional 10% at AR 11, 30% total
             else if (approachRate < 8.0)
                 approachRateFactor += 0.025 * (8.0 - approachRate); // 2.5% for each AR below 8
+
+            if (hasDoubleTime && approachRate > 10.0)
+                approachRateFactor *= 1.0 + 0.35 * (approachRate - 10.0); // Give DT/NC a strong extra reward once they push maps into high AR territory
 
             value *= approachRateFactor;
 
