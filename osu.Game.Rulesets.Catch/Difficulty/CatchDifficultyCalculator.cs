@@ -22,24 +22,24 @@ namespace osu.Game.Rulesets.Catch.Difficulty
     public class CatchDifficultyCalculator : DifficultyCalculator
     {
         private const double difficulty_multiplier = 4.59;
-        private const double star_rating_offset = 1.1181427573600753;
-        private const double star_rating_scale = 1.5199399798151179;
-        private const double mid_star_rating_threshold = 1.7617500890717477;
-        private const double mid_star_rating_scale = -0.749614464347724;
-        private const double high_star_rating_threshold = 2.6724256380204943;
-        private const double high_star_rating_scale = 1.1384175458182686;
-        private const double post_star_rating_offset = 0.000488430731334767;
-        private const double post_star_rating_scale = 1.1595067810088586;
-        private const double post_mid_star_rating_threshold = -8.437275219753339;
-        private const double post_mid_star_rating_scale = -0.01803264012125772;
-        private const double post_high_star_rating_threshold = 4.645117962927352;
-        private const double post_high_star_rating_scale = 0.36086608679710264;
-        private const double final_star_rating_offset = -0.006187255540384417;
-        private const double final_star_rating_scale = 1.0325052691979981;
-        private const double final_mid_star_rating_threshold = 6.700076433231558;
-        private const double final_mid_star_rating_scale = -0.24307130000439414;
-        private const double final_high_star_rating_threshold = 8.845123674445082;
-        private const double final_high_star_rating_scale = -0.5859933172681756;
+        private const double star_rating_offset = 0.7255969260908679;
+        private const double star_rating_scale = 1.0408916525222605;
+        private const double mid_star_rating_threshold = 1.60802314927658;
+        private const double mid_star_rating_scale = -0.5496362053880994;
+        private const double high_star_rating_threshold = 2.729380574365204;
+        private const double high_star_rating_scale = 1.0471484702030018;
+        private const double post_star_rating_offset = 0.1462793085973218;
+        private const double post_star_rating_scale = 1.376778734757492;
+        private const double post_mid_star_rating_threshold = 3.810894904217539;
+        private const double post_mid_star_rating_scale = -0.4351189652132752;
+        private const double post_high_star_rating_threshold = 1.7316996364532964;
+        private const double post_high_star_rating_scale = 0.26909402720151443;
+        private const double final_star_rating_offset = 0.0397027861802199;
+        private const double final_star_rating_scale = 1.095888398217134;
+        private const double final_mid_star_rating_threshold = 2.5479333969021143;
+        private const double final_mid_star_rating_scale = 0.10461615679080749;
+        private const double final_high_star_rating_threshold = 7.492109039347623;
+        private const double final_high_star_rating_scale = -0.8917171023790957;
 
         public override int Version => 2026041205;
 
@@ -61,9 +61,14 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             // Normalize entropy: max is log2(16)=4.0
             double normalizedEntropy = positionEntropy / 4.0;
 
+            // For very high movement maps, sustained difficulty indicates predictable zigzag
+            // which is less difficult than varied patterns at the same speed
+            double movementExcess = Math.Max(0, movement - 0.55) / 0.35;
+            double sustainedModifier = 1 + 0.10 * sustainedRatio * (1 - movementExcess);
+
             double baseStarRating = Math.Sqrt(movement) * difficulty_multiplier
                                     * (1 + 0.060 * Math.Sqrt(precisionPatterns))
-                                    * (1 + 0.10 * sustainedRatio)
+                                    * sustainedModifier
                                     * (1 + 0.08 * normalizedEntropy);
             double calibratedStarRating = star_rating_offset + star_rating_scale * baseStarRating
                                           + mid_star_rating_scale * Math.Max(0, baseStarRating - mid_star_rating_threshold)
