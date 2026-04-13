@@ -34,8 +34,15 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
         /// </summary>
         public double PositionEntropy { get; private set; }
 
+        /// <summary>
+        /// Proportion of moving objects that involve a direction change.
+        /// </summary>
+        public double DirectionChangeRatio { get; private set; }
+
         private readonly int[] positionBinCounts = new int[position_bins];
         private int totalTrackedObjects;
+        private int directionChangeCount;
+        private int movingObjectCount;
 
         public HarmonicMovement(Mod[] mods)
             : base(mods)
@@ -50,6 +57,23 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             int bin = Math.Clamp((int)(catchCurrent.BaseObject.EffectiveX / (512.0 / position_bins)), 0, position_bins - 1);
             positionBinCounts[bin]++;
             totalTrackedObjects++;
+
+            // Track direction changes
+            if (Math.Abs(catchCurrent.DistanceMoved) > 0.1)
+            {
+                movingObjectCount++;
+
+                if (current.Index >= 1)
+                {
+                    var catchLast = (CatchDifficultyHitObject)current.Previous(0);
+
+                    if (Math.Abs(catchLast.DistanceMoved) > 0.1
+                        && Math.Sign(catchCurrent.DistanceMoved) != Math.Sign(catchLast.DistanceMoved))
+                    {
+                        directionChangeCount++;
+                    }
+                }
+            }
 
             return MovementEvaluator.EvaluateDifficultyOf(current);
         }
@@ -100,6 +124,10 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
 
                 PositionEntropy = entropy;
             }
+
+            // Compute direction change ratio
+            if (movingObjectCount > 10)
+                DirectionChangeRatio = (double)directionChangeCount / movingObjectCount;
 
             return difficulty * lengthBonus;
         }

@@ -57,6 +57,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             double precisionPatterns = skills.OfType<PrecisionPatterns>().Single().DifficultyValue();
             double sustainedRatio = skills.OfType<HarmonicMovement>().Single().SustainedRatio;
             double positionEntropy = skills.OfType<HarmonicMovement>().Single().PositionEntropy;
+            double directionChangeRatio = skills.OfType<HarmonicMovement>().Single().DirectionChangeRatio;
 
             // Normalize entropy: max is log2(16)=4.0
             double normalizedEntropy = positionEntropy / 4.0;
@@ -66,10 +67,15 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             double movementExcess = Math.Max(0, movement - 0.55) / 0.35;
             double sustainedModifier = 1 + 0.10 * sustainedRatio * (1 - movementExcess);
 
+            // High sustained-movement with low direction-change ratio indicates wide predictable flow
+            double sustainedMovementScore = movement * (1 - directionChangeRatio);
+            double smsPenalty = 1 - 0.25 * Math.Max(0, sustainedMovementScore - 0.40);
+
             double baseStarRating = Math.Sqrt(movement) * difficulty_multiplier
                                     * (1 + 0.060 * Math.Sqrt(precisionPatterns))
                                     * sustainedModifier
-                                    * (1 + 0.08 * normalizedEntropy);
+                                    * (1 + 0.08 * normalizedEntropy)
+                                    * smsPenalty;
             double calibratedStarRating = star_rating_offset + star_rating_scale * baseStarRating
                                           + mid_star_rating_scale * Math.Max(0, baseStarRating - mid_star_rating_threshold)
                                           + high_star_rating_scale * Math.Max(0, baseStarRating - high_star_rating_threshold);
