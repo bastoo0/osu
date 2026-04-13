@@ -18,8 +18,9 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
     /// </summary>
     public class HarmonicMovement : Skill
     {
-        private const double base_harmonic_scale = 13.0;
-        private const double decay_exponent = 0.8;
+        private const double base_harmonic_scale = 12.0;
+        private const double decay_exponent = 0.87;
+        private const int position_bins = 16;
 
         public int PalpableObjectCount => ObjectDifficulties.Count;
 
@@ -28,6 +29,14 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
         /// </summary>
         public double SustainedRatio { get; private set; }
 
+        /// <summary>
+        /// Shannon entropy of object positions across the playfield (0 = concentrated, ~4 = spread).
+        /// </summary>
+        public double PositionEntropy { get; private set; }
+
+        private readonly int[] positionBinCounts = new int[position_bins];
+        private int totalTrackedObjects;
+
         public HarmonicMovement(Mod[] mods)
             : base(mods)
         {
@@ -35,6 +44,13 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
 
         protected override double ProcessInternal(DifficultyHitObject current)
         {
+            var catchCurrent = (CatchDifficultyHitObject)current;
+
+            // Track position distribution for entropy
+            int bin = Math.Clamp((int)(catchCurrent.BaseObject.EffectiveX / (512.0 / position_bins)), 0, position_bins - 1);
+            positionBinCounts[bin]++;
+            totalTrackedObjects++;
+
             return MovementEvaluator.EvaluateDifficultyOf(current);
         }
 
@@ -46,7 +62,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             double[] difficulties = ObjectDifficulties.Where(p => p > 0).ToArray();
 
             double lengthRatio = difficulties.Length / 1000.0;
-            double adaptiveScale = base_harmonic_scale * Math.Pow(lengthRatio, 0.15);
+            double adaptiveScale = base_harmonic_scale * Math.Pow(lengthRatio, 0.12);
 
             foreach (double note in difficulties.OrderDescending())
             {
@@ -59,13 +75,30 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
 
             double lengthBonus = 1 + 0.05 * Math.Log(Math.Max(difficulties.Length, 1));
 
-            // Compute sustained ratio: median / p90
+            // Compute sustained ratio
             if (difficulties.Length >= 10)
             {
                 double[] sorted = difficulties.OrderBy(x => x).ToArray();
                 double median = sorted[sorted.Length / 2];
                 double p90 = sorted[(int)(sorted.Length * 0.9)];
                 SustainedRatio = p90 > 0 ? median / p90 : 0;
+            }
+
+            // Compute position entropy
+            if (totalTrackedObjects > 10)
+            {
+                double entropy = 0;
+
+                for (int i = 0; i < position_bins; i++)
+                {
+                    if (positionBinCounts[i] > 0)
+                    {
+                        double p = (double)positionBinCounts[i] / totalTrackedObjects;
+                        entropy -= p * Math.Log2(p);
+                    }
+                }
+
+                PositionEntropy = entropy;
             }
 
             return difficulty * lengthBonus;
