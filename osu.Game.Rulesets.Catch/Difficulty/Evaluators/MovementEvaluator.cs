@@ -157,6 +157,20 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                                    && catchCurrent.StrainTime == catchLast.StrainTime && catchLast.StrainTime == catchLastLast.StrainTime)
                 distanceAddition = 0;
 
+            // Micro-positioning: objects caught without catcher movement but offset from center
+            // contribute to positioning pressure for subsequent objects
+            if (Math.Abs(catchCurrent.DistanceMoved) < 0.1 && Math.Abs(catchCurrent.ExactDistanceMoved) > CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 0.3)
+            {
+                double microOffset = Math.Abs(catchCurrent.ExactDistanceMoved) / CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH;
+                distanceAddition += 20.0 * Math.Pow(microOffset, 1.5) / sqrtStrain;
+            }
+
+            // Edge proximity: objects near playfield edges are harder (less room for error)
+            double edgeProximity = Math.Max(0, 1 - 2.0 * Math.Abs(catchCurrent.BaseObject.EffectiveX - 256) / 512.0);
+            double edgeDifficulty = 1 - edgeProximity; // 0 at center, 1 at edge
+            if (edgeDifficulty > 0.7)
+                distanceAddition *= 1.0 + 0.20 * (edgeDifficulty - 0.7) / 0.3;
+
             return distanceAddition * (1.0 + 0.16 * precisionPressure) / Math.Pow(weightedStrainTime, 1.05);
         }
     }
