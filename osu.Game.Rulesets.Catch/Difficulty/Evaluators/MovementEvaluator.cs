@@ -41,7 +41,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                     double dcMultiplier = 1.0;
 
                     if (current.Index >= 2 && Math.Sign(catchLast.DistanceMoved) != Math.Sign(catchLastLast.DistanceMoved))
-                        dcMultiplier = 1.2;
+                        dcMultiplier = 1.4;
 
                     distanceAddition += direction_change_bonus * dcMultiplier / Math.Sqrt(catchLast.StrainTime + 16) * bonusFactor * antiflowFactor * Math.Max(1 - Math.Pow(weightedStrainTime / 1000, 3), 0);
                 }
