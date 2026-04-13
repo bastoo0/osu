@@ -22,24 +22,24 @@ namespace osu.Game.Rulesets.Catch.Difficulty
     public class CatchDifficultyCalculator : DifficultyCalculator
     {
         private const double difficulty_multiplier = 4.59;
-        private const double star_rating_offset = 0.8008149770940136;
-        private const double star_rating_scale = 1.035353379328138;
-        private const double mid_star_rating_threshold = 1.5469721927109712;
-        private const double mid_star_rating_scale = -0.5563778981774505;
-        private const double high_star_rating_threshold = 2.7179864996251633;
-        private const double high_star_rating_scale = 0.9143803844509867;
-        private const double post_star_rating_offset = 0.16472254250019092;
-        private const double post_star_rating_scale = 1.3135789656920127;
-        private const double post_mid_star_rating_threshold = 3.735526306186671;
-        private const double post_mid_star_rating_scale = -0.38359941625937277;
-        private const double post_high_star_rating_threshold = 1.8230599025142658;
-        private const double post_high_star_rating_scale = 0.4429710621840124;
-        private const double final_star_rating_offset = 0.0318888717397649;
-        private const double final_star_rating_scale = 1.0906976230042422;
-        private const double final_mid_star_rating_threshold = 2.5397535315387514;
-        private const double final_mid_star_rating_scale = 0.1153684837161305;
-        private const double final_high_star_rating_threshold = 7.506428225034812;
-        private const double final_high_star_rating_scale = -0.5722108424928342;
+        private const double star_rating_offset = 0.7572404287574261;
+        private const double star_rating_scale = 1.07356781867185;
+        private const double mid_star_rating_threshold = 1.5890691262613121;
+        private const double mid_star_rating_scale = -0.5512378750868354;
+        private const double high_star_rating_threshold = 2.749551252423327;
+        private const double high_star_rating_scale = 0.9911592686109302;
+        private const double post_star_rating_offset = 0.1829733626931694;
+        private const double post_star_rating_scale = 1.3165209391763957;
+        private const double post_mid_star_rating_threshold = 3.830092635085043;
+        private const double post_mid_star_rating_scale = -0.34192799827563697;
+        private const double post_high_star_rating_threshold = 1.8133803986693624;
+        private const double post_high_star_rating_scale = 0.2885571008806256;
+        private const double final_star_rating_offset = 0.06466120221811053;
+        private const double final_star_rating_scale = 1.0682789628652847;
+        private const double final_mid_star_rating_threshold = 2.6435410435025286;
+        private const double final_mid_star_rating_scale = 0.15610195112060657;
+        private const double final_high_star_rating_threshold = 7.463690376430094;
+        private const double final_high_star_rating_scale = -0.5876801940291363;
 
         public override int Version => 2026041205;
 
@@ -75,7 +75,8 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             double smsPenalty = 1 - 0.55 * Math.Max(0, sustainedMovementScore - 0.40);
 
             // Spikiness penalty: maps dominated by a few hard objects are overrated
-            double spikyPenalty = 1.0 / (1.0 + 0.015 * Math.Max(0, spikiness - 3.5));
+            double consistencyBonus = 1 + 0.10 * sustainedRatio * Math.Max(0, 3.5 - spikiness) / 3.5;
+            double spikyPenalty = 1.0 / (1.0 + 0.020 * Math.Max(0, spikiness - 3.9));
 
             // Blend harmonic peak difficulty with total difficulty mass
             double blendedMovement = 0.98 * movement + 0.02 * difficultyMass;
@@ -85,7 +86,8 @@ namespace osu.Game.Rulesets.Catch.Difficulty
                                     * sustainedModifier
                                     * (1 + 0.08 * normalizedEntropy)
                                     * smsPenalty
-                                    * spikyPenalty;
+                                    * spikyPenalty
+                                    * consistencyBonus;
             double calibratedStarRating = star_rating_offset + star_rating_scale * baseStarRating
                                           + mid_star_rating_scale * Math.Max(0, baseStarRating - mid_star_rating_threshold)
                                           + high_star_rating_scale * Math.Max(0, baseStarRating - high_star_rating_threshold);
