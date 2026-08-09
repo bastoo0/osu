@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Collections.Generic;
 using System.Linq;
 using osu.Game.Rulesets.Catch.Difficulty.Evaluators;
 using osu.Game.Rulesets.Catch.Difficulty.Preprocessing;
@@ -19,13 +20,21 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
         private const double rhythm_change_bonus = 2.0;
         private const double alternating_stamina_bonus = 0.0212;
         private const int maximum_alternating_stamina_run = 64;
+        private const double repeated_control_bonus = 0.185;
+        private const double maximum_repeated_control_share = 0.318;
+        private const double sustained_strain_bonus = 4.14;
+        private const double maximum_sustained_strain = 0.0137;
 
         private double currentStrain;
         private int objectCount;
         private int hyperDashCount;
+        private int mostCommonControlCount;
         private int currentAlternatingRun;
         private int maximumAlternatingRun;
         private int lastMovementDirection;
+
+        private readonly Dictionary<(int Timing, int Travel, int Direction, bool Hyperdash), int> controlTransitionCounts = new();
+        private readonly List<double> evaluatorDifficulties = new();
 
         public Movement(Mod[] mods)
             : base(mods, 0.90, 750)
@@ -40,6 +49,16 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
 
             if (catchCurrent.LastObject.HyperDash)
                 hyperDashCount++;
+
+            var controlTransition = (
+                Timing: (int)System.Math.Round(catchCurrent.StrainTime / 25),
+                Travel: (int)System.Math.Round(catchCurrent.TravelDistance / 20),
+                Direction: catchCurrent.MovementDirection,
+                Hyperdash: catchCurrent.LastObject.HyperDash);
+
+            controlTransitionCounts.TryGetValue(controlTransition, out int controlCount);
+            controlTransitionCounts[controlTransition] = ++controlCount;
+            mostCommonControlCount = System.Math.Max(mostCommonControlCount, controlCount);
 
             if (catchCurrent.MovementDirection != 0)
             {
@@ -78,7 +97,9 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
                     controlScale += rhythm_change_bonus;
             }
 
-            currentStrain += MovementEvaluator.EvaluateDifficultyOf(current) * controlScale;
+            double evaluatorDifficulty = MovementEvaluator.EvaluateDifficultyOf(current);
+            evaluatorDifficulties.Add(evaluatorDifficulty);
+            currentStrain += evaluatorDifficulty * controlScale;
 
             return currentStrain;
         }
@@ -103,6 +124,12 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             double peakDifficulty = difficulty / (1 - DecayWeight);
             double sustainedDifficulty = ObjectDifficulties.Count == 0 ? 0 : ObjectDifficulties.Average();
             double hyperDashRatio = objectCount == 0 ? 0 : (double)hyperDashCount / objectCount;
+            double repeatedControlShare = objectCount == 0 ? 0 : (double)mostCommonControlCount / objectCount;
+
+            evaluatorDifficulties.Sort();
+            double medianEvaluatorDifficulty = evaluatorDifficulties.Count == 0
+                ? 0
+                : (evaluatorDifficulties[(evaluatorDifficulties.Count - 1) / 2] + evaluatorDifficulties[evaluatorDifficulties.Count / 2]) / 2;
 
             // A forced dash is mechanically demanding, but a map made mostly of forced dashes is
             // not proportionally harder for every additional one: the catcher is already in the
@@ -117,10 +144,19 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             double alternatingStaminaScale = System.Math.Exp(alternating_stamina_bonus
                                                               * System.Math.Sqrt(System.Math.Min(maximumAlternatingRun, maximum_alternating_stamina_run)));
 
+            // Repeating one timing, travel and input state creates sustained control demand even
+            // when no individual transition is exceptional. The median evaluator strain ensures
+            // that a map must also sustain meaningful movement, rather than gaining difficulty
+            // from repetition alone. Both contributions saturate at map scale.
+            double repeatedControlScale = System.Math.Exp(
+                repeated_control_bonus * System.Math.Min(repeatedControlShare, maximum_repeated_control_share)
+                + sustained_strain_bonus * System.Math.Min(medianEvaluatorDifficulty, maximum_sustained_strain));
+
             // Difficulty is square-rooted into star rating, hence the squared scale here.
             return (peakDifficulty + sustainedDifficulty)
                    * hyperDashScale * hyperDashScale
-                   * alternatingStaminaScale * alternatingStaminaScale;
+                   * alternatingStaminaScale * alternatingStaminaScale
+                   * repeatedControlScale * repeatedControlScale;
         }
 
         private static double strainDecay(double milliseconds) => DiffUtils.Pow(strain_decay_base, milliseconds / 1000);
