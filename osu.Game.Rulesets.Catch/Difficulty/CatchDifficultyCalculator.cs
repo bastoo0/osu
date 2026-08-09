@@ -28,7 +28,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
         private const double star_rating_power = 1.65;
         private const double star_rating_scale = 0.17314;
 
-        public override int Version => 20260813;
+        public override int Version => 20260814;
 
         public CatchDifficultyCalculator(IRulesetInfo ruleset, IWorkingBeatmap beatmap)
             : base(ruleset, beatmap)

@@ -24,6 +24,9 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
         private const double maximum_repeated_control_share = 0.318;
         private const double sustained_strain_bonus = 4.14;
         private const double maximum_sustained_strain = 0.0137;
+        private const double peak_edge_dash_bonus = 0.2;
+        private const double maximum_peak_edge_dash_share = 0.3;
+        private const int peak_transition_count = 20;
 
         private double currentStrain;
         private int objectCount;
@@ -32,9 +35,11 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
         private int currentAlternatingRun;
         private int maximumAlternatingRun;
         private int lastMovementDirection;
+        private int hardestTransitionCount;
 
         private readonly Dictionary<(int Timing, int Travel, int Direction, bool Hyperdash), int> controlTransitionCounts = new();
         private readonly List<double> evaluatorDifficulties = new();
+        private readonly (double Strain, bool EdgeDash)[] hardestTransitions = new (double, bool)[peak_transition_count];
 
         public Movement(Mod[] mods)
             : base(mods, 0.90, 750)
@@ -101,6 +106,9 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             evaluatorDifficulties.Add(evaluatorDifficulty);
             currentStrain += evaluatorDifficulty * controlScale;
 
+            recordHardestTransition(currentStrain,
+                !catchCurrent.LastObject.HyperDash && catchCurrent.LastObject.DistanceToHyperDash <= 20);
+
             return currentStrain;
         }
 
@@ -125,6 +133,9 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             double sustainedDifficulty = ObjectDifficulties.Count == 0 ? 0 : ObjectDifficulties.Average();
             double hyperDashRatio = objectCount == 0 ? 0 : (double)hyperDashCount / objectCount;
             double repeatedControlShare = objectCount == 0 ? 0 : (double)mostCommonControlCount / objectCount;
+            double peakEdgeDashShare = hardestTransitionCount == 0
+                ? 0
+                : (double)hardestTransitions.Take(hardestTransitionCount).Count(transition => transition.EdgeDash) / hardestTransitionCount;
 
             evaluatorDifficulties.Sort();
             double medianEvaluatorDifficulty = evaluatorDifficulties.Count == 0
@@ -152,11 +163,41 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
                 repeated_control_bonus * System.Math.Min(repeatedControlShare, maximum_repeated_control_share)
                 + sustained_strain_bonus * System.Math.Min(medianEvaluatorDifficulty, maximum_sustained_strain));
 
+            // A near-hyper transition requires deliberately using the edge of the catcher's range.
+            // Reward it only when it appears among the map's hardest transitions: raw edge-dash
+            // counts also include long, repetitive maps where that precision is not peak demand.
+            double peakEdgeDashScale = System.Math.Exp(
+                peak_edge_dash_bonus * System.Math.Min(peakEdgeDashShare, maximum_peak_edge_dash_share));
+
             // Difficulty is square-rooted into star rating, hence the squared scale here.
             return (peakDifficulty + sustainedDifficulty)
                    * hyperDashScale * hyperDashScale
                    * alternatingStaminaScale * alternatingStaminaScale
-                   * repeatedControlScale * repeatedControlScale;
+                   * repeatedControlScale * repeatedControlScale
+                   * peakEdgeDashScale * peakEdgeDashScale;
+        }
+
+        private void recordHardestTransition(double strain, bool edgeDash)
+        {
+            int insertionIndex = hardestTransitionCount;
+
+            if (hardestTransitionCount < peak_transition_count)
+                hardestTransitionCount++;
+            else
+            {
+                insertionIndex--;
+
+                if (strain <= hardestTransitions[insertionIndex].Strain)
+                    return;
+            }
+
+            while (insertionIndex > 0 && strain > hardestTransitions[insertionIndex - 1].Strain)
+            {
+                hardestTransitions[insertionIndex] = hardestTransitions[insertionIndex - 1];
+                insertionIndex--;
+            }
+
+            hardestTransitions[insertionIndex] = (strain, edgeDash);
         }
 
         private static double strainDecay(double milliseconds) => DiffUtils.Pow(strain_decay_base, milliseconds / 1000);
