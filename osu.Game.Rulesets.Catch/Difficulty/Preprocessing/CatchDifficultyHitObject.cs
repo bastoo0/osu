@@ -31,6 +31,8 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Preprocessing
         /// </summary>
         public readonly float LastNormalizedPosition;
 
+        private readonly float normalizationOrigin;
+
         /// <summary>
         /// Normalized position of the player required to catch <see cref="BaseObject"/>, assuming the player moves as little as possible.
         /// </summary>
@@ -108,8 +110,12 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Preprocessing
             // We will scale everything by this factor, so we can assume a uniform CircleSize among beatmaps.
             float scalingFactor = NORMALIZED_HALF_CATCHER_WIDTH / halfCatcherWidth;
 
-            NormalizedPosition = BaseObject.EffectiveX * scalingFactor;
-            LastNormalizedPosition = LastObject.EffectiveX * scalingFactor;
+            // Movement only depends on relative horizontal positions. Anchoring every object to the
+            // first fruit avoids floating-point drift when an otherwise identical pattern is safely
+            // translated across the playfield.
+            normalizationOrigin = Index == 0 ? LastObject.EffectiveX : ((CatchDifficultyHitObject)Previous(0)).normalizationOrigin;
+            NormalizedPosition = (BaseObject.EffectiveX - normalizationOrigin) * scalingFactor;
+            LastNormalizedPosition = (LastObject.EffectiveX - normalizationOrigin) * scalingFactor;
 
             // Every strain interval is hard capped at the equivalent of 375 BPM streaming speed as a safety measure
             StrainTime = Math.Max(40, DeltaTime);
@@ -140,7 +146,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Preprocessing
             // an independent strain peak.
             if (!LastObject.HyperDash)
             {
-                foreach (float position in pathObjects.Select(pathObject => pathObject.EffectiveX * scalingFactor).Append(NormalizedPosition))
+                foreach (float position in pathObjects.Select(pathObject => (pathObject.EffectiveX - normalizationOrigin) * scalingFactor).Append(NormalizedPosition))
                 {
                     TravelDistance += moveToCatchInterval(ref playerPosition, position, NORMALIZED_HALF_CATCHER_WIDTH, ref lastMovementDirection);
                     ComfortableTravelDistance += moveToCatchInterval(ref comfortablePlayerPosition, position, comfortable_catch_range, ref lastMovementDirection);

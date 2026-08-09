@@ -26,9 +26,9 @@ namespace osu.Game.Rulesets.Catch.Difficulty
         private const double low_ar_reading_bonus = 0.23;
         private const double maximum_reading_bonus = 0.5;
         private const double star_rating_power = 1.65;
-        private const double star_rating_scale = 0.20400;
+        private const double star_rating_scale = 0.18327;
 
-        public override int Version => 20260811;
+        public override int Version => 20260812;
 
         public CatchDifficultyCalculator(IRulesetInfo ruleset, IWorkingBeatmap beatmap)
             : base(ruleset, beatmap)

@@ -17,10 +17,15 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
         private const double hyperdash_saturation = 1.1;
         private const double direction_change_bonus = 1.0;
         private const double rhythm_change_bonus = 2.0;
+        private const double alternating_stamina_bonus = 0.0212;
+        private const int maximum_alternating_stamina_run = 64;
 
         private double currentStrain;
         private int objectCount;
         private int hyperDashCount;
+        private int currentAlternatingRun;
+        private int maximumAlternatingRun;
+        private int lastMovementDirection;
 
         public Movement(Mod[] mods)
             : base(mods, 0.90, 750)
@@ -35,6 +40,22 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
 
             if (catchCurrent.LastObject.HyperDash)
                 hyperDashCount++;
+
+            if (catchCurrent.MovementDirection != 0)
+            {
+                if (lastMovementDirection != 0)
+                {
+                    if (catchCurrent.MovementDirection != lastMovementDirection)
+                    {
+                        currentAlternatingRun++;
+                        maximumAlternatingRun = System.Math.Max(maximumAlternatingRun, currentAlternatingRun);
+                    }
+                    else
+                        currentAlternatingRun = 0;
+                }
+
+                lastMovementDirection = catchCurrent.MovementDirection;
+            }
 
             // Keep accumulation consistent with the evaluator's 40 ms density safety cap.
             // Otherwise sub-cap objects retain nearly all prior strain while each still adds a
@@ -89,8 +110,17 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             // evaluator continues to price the travel and landing of each individual transition.
             double hyperDashScale = 1 / (1 + hyperdash_saturation * hyperDashRatio);
 
+            // Isolated reversals are handled by the per-object control bonus above. Sustaining a
+            // long left-right sequence adds a smaller map-level control-stamina demand. Square-root
+            // growth and a fixed cap keep marathon patterns relevant without making length itself
+            // an unlimited source of difficulty.
+            double alternatingStaminaScale = System.Math.Exp(alternating_stamina_bonus
+                                                              * System.Math.Sqrt(System.Math.Min(maximumAlternatingRun, maximum_alternating_stamina_run)));
+
             // Difficulty is square-rooted into star rating, hence the squared scale here.
-            return (peakDifficulty + sustainedDifficulty) * hyperDashScale * hyperDashScale;
+            return (peakDifficulty + sustainedDifficulty)
+                   * hyperDashScale * hyperDashScale
+                   * alternatingStaminaScale * alternatingStaminaScale;
         }
 
         private static double strainDecay(double milliseconds) => DiffUtils.Pow(strain_decay_base, milliseconds / 1000);
