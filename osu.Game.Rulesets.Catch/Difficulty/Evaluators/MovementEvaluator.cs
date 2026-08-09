@@ -13,6 +13,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
         private const double direction_change_bonus = 21.0;
         private const double positioning_weight = 0.35;
         private const double path_weight = 0.15;
+        private const double timing_exponent = 0.7;
 
         public static double EvaluateDifficultyOf(DifficultyHitObject current)
         {
@@ -93,7 +94,11 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                                                         * DiffUtils.Pow((Math.Min(catchCurrent.StrainTime * catcherSpeedMultiplier, 265) / 265), 1.5); // Edge Dashes are easier at lower ms values
             }
 
-            return distanceAddition / weightedStrainTime;
+            // Compress timing extremes around 100 ms. Very fast patterns remain harder, but do
+            // not grow linearly when the catcher is repeating the same short control cycle.
+            double timingNormalisation = DiffUtils.Pow(100, 1 - timing_exponent) * DiffUtils.Pow(weightedStrainTime, timing_exponent);
+
+            return distanceAddition / timingNormalisation;
         }
 
         private static double effectiveDistanceOf(CatchDifficultyHitObject current)

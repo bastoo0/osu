@@ -23,8 +23,12 @@ namespace osu.Game.Rulesets.Catch.Difficulty
     {
         // Calibrated after ordering was frozen to preserve the baseline median SR.
         private const double difficulty_multiplier = 6.07;
+        private const double low_ar_reading_bonus = 0.23;
+        private const double maximum_reading_bonus = 0.5;
+        private const double star_rating_power = 1.65;
+        private const double star_rating_scale = 0.20400;
 
-        public override int Version => 20260809;
+        public override int Version => 20260811;
 
         public CatchDifficultyCalculator(IRulesetInfo ruleset, IWorkingBeatmap beatmap)
             : base(ruleset, beatmap)
@@ -36,9 +40,16 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             if (beatmap.HitObjects.Count == 0)
                 return new CatchDifficultyAttributes { Mods = mods };
 
+            double lowArReading = Math.Sqrt(Math.Max(0, 9.25 - beatmap.Difficulty.ApproachRate));
+            double readingScale = Math.Exp(Math.Min(maximum_reading_bonus, low_ar_reading_bonus * lowArReading));
+            double rawRating = Math.Sqrt(skills.OfType<Movement>().Single().DifficultyValue()) * readingScale * difficulty_multiplier;
+
             CatchDifficultyAttributes attributes = new CatchDifficultyAttributes
             {
-                StarRating = Math.Sqrt(skills.OfType<Movement>().Single().DifficultyValue()) * difficulty_multiplier,
+                // Timing compression and hyperdash saturation reduce the raw top-end range.
+                // Apply one monotonic display curve so the 5th, median and 95th percentiles remain
+                // in the established SR range without changing any map ordering.
+                StarRating = Math.Pow(rawRating, star_rating_power) * star_rating_scale,
                 Mods = mods,
                 MaxCombo = beatmap.GetMaxCombo(),
             };

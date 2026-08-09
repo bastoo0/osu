@@ -14,14 +14,16 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
     public class Movement : VariableLengthStrainSkill
     {
         private const double strain_decay_base = 0.2;
-        private const double hyperdash_saturation = 1.5;
+        private const double hyperdash_saturation = 1.1;
+        private const double direction_change_bonus = 1.0;
+        private const double rhythm_change_bonus = 2.0;
 
         private double currentStrain;
         private int objectCount;
         private int hyperDashCount;
 
         public Movement(Mod[] mods)
-            : base(mods, 0.94, 750)
+            : base(mods, 0.90, 750)
         {
         }
 
@@ -38,7 +40,24 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             // Otherwise sub-cap objects retain nearly all prior strain while each still adds a
             // full 40 ms contribution, allowing object spam to stack without the intended bound.
             currentStrain *= strainDecay(catchCurrent.StrainTime);
-            currentStrain += MovementEvaluator.EvaluateDifficultyOf(current);
+
+            double controlScale = 1;
+
+            if (current.Index >= 1)
+            {
+                var previous = (CatchDifficultyHitObject)current.Previous(0);
+
+                // A direction reversal requires a new movement input rather than continuing the
+                // previous motion. A large rhythm change likewise requires the player to retime
+                // that input instead of repeating a steady pattern.
+                if (catchCurrent.MovementDirection != 0 && previous.MovementDirection != 0 && catchCurrent.MovementDirection != previous.MovementDirection)
+                    controlScale += direction_change_bonus;
+
+                if (System.Math.Abs(catchCurrent.StrainTime / previous.StrainTime - 1) > 0.25)
+                    controlScale += rhythm_change_bonus;
+            }
+
+            currentStrain += MovementEvaluator.EvaluateDifficultyOf(current) * controlScale;
 
             return currentStrain;
         }
