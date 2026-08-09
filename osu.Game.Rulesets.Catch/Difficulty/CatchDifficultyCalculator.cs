@@ -21,9 +21,10 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 {
     public class CatchDifficultyCalculator : DifficultyCalculator
     {
-        private const double difficulty_multiplier = 4.59;
+        // Calibrated after ordering was frozen to preserve the baseline median SR.
+        private const double difficulty_multiplier = 6.07;
 
-        public override int Version => 20260706;
+        public override int Version => 20260809;
 
         public CatchDifficultyCalculator(IRulesetInfo ruleset, IWorkingBeatmap beatmap)
             : base(ruleset, beatmap)
@@ -47,7 +48,8 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 
         protected override IEnumerable<DifficultyHitObject> CreateDifficultyHitObjects(IBeatmap beatmap, Mod[] mods)
         {
-            CatchHitObject? lastObject = null;
+            PalpableCatchHitObject? lastObject = null;
+            var pathObjects = new List<TinyDroplet>();
 
             List<DifficultyHitObject> objects = new List<DifficultyHitObject>(beatmap.HitObjects.Count);
 
@@ -61,14 +63,24 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             // In 2B beatmaps, it is possible that a normal Fruit is placed in the middle of a JuiceStream.
             foreach (var hitObject in CatchBeatmap.GetPalpableObjects(beatmap.HitObjects))
             {
-                // We want to only consider fruits that contribute to the combo.
-                if (hitObject is Banana || hitObject is TinyDroplet)
+                if (hitObject is Banana)
                     continue;
 
+                // Tiny droplets do not receive their own strain peaks, but constrain the slider
+                // path between adjacent combo objects.
+                if (hitObject is TinyDroplet tinyDroplet)
+                {
+                    if (lastObject != null)
+                        pathObjects.Add(tinyDroplet);
+
+                    continue;
+                }
+
                 if (lastObject != null)
-                    objects.Add(new CatchDifficultyHitObject(hitObject, lastObject, clockRate, halfCatcherWidth, objects, objects.Count));
+                    objects.Add(new CatchDifficultyHitObject(hitObject, lastObject, clockRate, halfCatcherWidth, objects, objects.Count, pathObjects));
 
                 lastObject = hitObject;
+                pathObjects.Clear();
             }
 
             return objects;
