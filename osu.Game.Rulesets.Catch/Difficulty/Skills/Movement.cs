@@ -85,9 +85,16 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             double maximumStrain = ObjectDifficulties.Count == 0 ? 0 : ObjectDifficulties.Max();
             SustainedStrainRatio = maximumStrain <= 0 ? 0 : sustainedDifficulty / maximumStrain;
             double hyperDashRatio = objectCount == 0 ? 0 : (double)hyperDashCount / objectCount;
-            double hyperDashScale = 1 / (1 + hyperdash_saturation * hyperDashRatio);
 
-            return (peakDifficulty + sustainedDifficulty) * hyperDashScale * hyperDashScale;
+            // Repeated forced dashes reuse the same held-dash state most at moderate strain. At
+            // low strain each hyper is the pattern's main demand; at extreme strain speed and
+            // landing precision remain independently demanding.
+            double rawDifficulty = peakDifficulty + sustainedDifficulty;
+            double moderateStrain = Math.Max(0, 1 - Math.Abs(rawDifficulty - 1.6));
+            double effectiveHyperDashSaturation = hyperdash_saturation * (1 + 1.7 * moderateStrain);
+            double hyperDashScale = 1 / (1 + effectiveHyperDashSaturation * hyperDashRatio);
+
+            return rawDifficulty * hyperDashScale * hyperDashScale;
         }
 
         public IEnumerable<double> GetCurrentStrainPeakValues() => GetCurrentStrainPeaks().Select(peak => peak.Value);

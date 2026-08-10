@@ -11,6 +11,8 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
     public static class MovementEvaluator
     {
         private const double direction_change_bonus = 21.0;
+        private const double ordinary_direction_change_bonus = 8.0;
+        private const double hyperdash_recovery_bonus = 16.0;
         private const double positioning_weight = 0.35;
         private const double timing_exponent = 0.7;
 
@@ -42,8 +44,20 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                     {
                         double bonusFactor = Math.Min(50, effectiveDistance) / 50;
                         double antiflowFactor = Math.Max(Math.Min(70, lastEffectiveDistance) / 70, 0.38);
+                        double directionChangeBonus = direction_change_bonus;
 
-                        distanceAddition += direction_change_bonus / Math.Sqrt(catchLast.StrainTime + 16) * bonusFactor * antiflowFactor * Math.Max(1 - DiffUtils.Pow(weightedStrainTime / 1000, 3), 0);
+                        // Forced hyperdashes already pay their full travel strain. Keep the base
+                        // reversal value, but reserve the additional control reward for ordinary
+                        // movement where the player must choose and time the reversal themselves.
+                        if (!catchCurrent.LastObject.HyperDash)
+                        {
+                            directionChangeBonus += ordinary_direction_change_bonus;
+
+                            if (catchLast.LastObject.HyperDash)
+                                directionChangeBonus += hyperdash_recovery_bonus;
+                        }
+
+                        distanceAddition += directionChangeBonus / Math.Sqrt(catchLast.StrainTime + 16) * bonusFactor * antiflowFactor * Math.Max(1 - DiffUtils.Pow(weightedStrainTime / 1000, 3), 0);
                     }
                 }
 

@@ -17,9 +17,10 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
             var catchCurrent = (CatchDifficultyHitObject)current;
             var previous = (CatchDifficultyHitObject)current.Previous(0);
 
-            // A forced hyperdash is already represented by movement strain. Technical control is
-            // the need to retime or resize ordinary movement without changing to a forced state.
-            if (catchCurrent.LastObject.HyperDash || previous.LastObject.HyperDash)
+            // A forced hyperdash is already represented by movement strain. The ordinary movement
+            // immediately after it is still a control demand: the player has to leave the forced
+            // state and retime or resize the next movement.
+            if (catchCurrent.LastObject.HyperDash)
                 return 0;
 
             double rhythmRatio = Math.Max(catchCurrent.StrainTime, previous.StrainTime)

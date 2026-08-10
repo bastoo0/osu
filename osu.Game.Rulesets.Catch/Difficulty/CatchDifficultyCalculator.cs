@@ -21,12 +21,12 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 {
     public class CatchDifficultyCalculator : DifficultyCalculator
     {
-        private const double difficulty_multiplier = 5.64;
+        private const double difficulty_multiplier = 5.54;
         private const double low_ar_reading_bonus = 0.04;
         private const double maximum_reading_bonus = 0.12;
-        private const double control_skill_weight = 0.45;
+        private const double control_skill_weight = 0.55;
 
-        public override int Version => 20260817;
+        public override int Version => 20260818;
 
         public CatchDifficultyCalculator(IRulesetInfo ruleset, IWorkingBeatmap beatmap)
             : base(ruleset, beatmap)
@@ -61,9 +61,11 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             double comboScale = Math.Clamp(
                 Math.Pow(Math.Max(1, movement.DifficultyObjectCount) / 1000.0, 0.1),
                 0.9,
-                1.08);
+                1.15);
             double sustainedScale = Math.Exp(0.28 * (movement.SustainedStrainRatio - 0.35));
-            double fruitScale = Math.Exp(0.25 * (movement.FruitRatio - 0.9));
+            // Droplets can add path and control constraints, so their presence should not reduce
+            // movement difficulty. Keep the small bonus for especially fruit-heavy patterns.
+            double fruitScale = Math.Exp(0.25 * Math.Max(0, movement.FruitRatio - 0.9));
 
             CatchDifficultyAttributes attributes = new CatchDifficultyAttributes
             {
