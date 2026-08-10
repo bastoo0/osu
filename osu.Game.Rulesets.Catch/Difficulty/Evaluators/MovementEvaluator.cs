@@ -12,7 +12,6 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
     {
         private const double direction_change_bonus = 21.0;
         private const double positioning_weight = 0.35;
-        private const double path_weight = 0.15;
         private const double timing_exponent = 0.7;
 
         public static double EvaluateDifficultyOf(DifficultyHitObject current)
@@ -25,9 +24,6 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
 
             double weightedStrainTime = catchCurrent.StrainTime + 13 + (3 / catcherSpeedMultiplier);
 
-            // Physical travel and positioning precision are deliberately separate. Movement inside
-            // the catchable interval is not mandatory, but consistently using its very edge leaves
-            // little practical error margin and therefore contributes a smaller amount of strain.
             double effectiveDistance = effectiveDistanceOf(catchCurrent);
 
             double distanceAddition = DiffUtils.Pow(effectiveDistance, 1.3) / 510;
@@ -56,9 +52,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                                     / (CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 6) / sqrtStrain;
             }
 
-            // Predictable same-direction movement needs fewer control changes, but remains a real
-            // sustained movement demand. Keep this adjustment bounded rather than exponentially
-            // erasing long slider paths and continuous streams.
+            // Linear spacing nerf.
             int linearSpacingCount = 0;
 
             for (int i = 0; i < Math.Min(current.Index, 10); i++)
@@ -94,8 +88,6 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                                                         * DiffUtils.Pow((Math.Min(catchCurrent.StrainTime * catcherSpeedMultiplier, 265) / 265), 1.5); // Edge Dashes are easier at lower ms values
             }
 
-            // Compress timing extremes around 100 ms. Very fast patterns remain harder, but do
-            // not grow linearly when the catcher is repeating the same short control cycle.
             double timingNormalisation = DiffUtils.Pow(100, 1 - timing_exponent) * DiffUtils.Pow(weightedStrainTime, timing_exponent);
 
             return distanceAddition / timingNormalisation;
@@ -103,7 +95,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
 
         private static double effectiveDistanceOf(CatchDifficultyHitObject current)
         {
-            double directTravel = current.DirectTravelDistance;
+            double physicalDistance = Math.Abs(current.PhysicalDistanceMoved);
 
             if (current.Index >= 1)
             {
@@ -111,22 +103,15 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
                 double leftmostPosition = Math.Min(current.NormalizedPosition, Math.Min(current.LastNormalizedPosition, previous.LastNormalizedPosition));
                 double rightmostPosition = Math.Max(current.NormalizedPosition, Math.Max(current.LastNormalizedPosition, previous.LastNormalizedPosition));
 
-                // If three consecutive objects share a physical catch interval, the catcher can
-                // remain in that intersection. This handles short buzz/wiggle patterns without
-                // relying on exact spacing or timing equality.
-                if (rightmostPosition - leftmostPosition <= CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 2)
-                    directTravel = 0;
+                // Three objects sharing one catch interval require no physical repositioning.
+                if (rightmostPosition - leftmostPosition <= current.NormalizedHalfCatcherWidth * 2)
+                    physicalDistance = 0;
             }
 
-            double precisionTravel = Math.Min(directTravel,
-                Math.Max(0, current.DirectComfortableTravelDistance - current.DirectTravelDistance));
-            double pathTravel = Math.Max(0, current.TravelDistance - current.DirectTravelDistance);
+            double comfortableDistance = Math.Abs(current.DistanceMoved);
+            double positioningDistance = Math.Max(0, comfortableDistance - physicalDistance);
 
-            // Tiny droplets describe the route between combo objects, but are lenient judgements.
-            // A cap prevents long or randomised slider paths from becoming one unbounded spike.
-            double cappedPathTravel = Math.Min(pathTravel, CatchDifficultyHitObject.NORMALIZED_HALF_CATCHER_WIDTH * 2);
-
-            return directTravel + precisionTravel * positioning_weight + cappedPathTravel * path_weight;
+            return physicalDistance + positioningDistance * positioning_weight;
         }
     }
 }

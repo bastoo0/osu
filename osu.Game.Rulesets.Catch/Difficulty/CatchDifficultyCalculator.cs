@@ -21,14 +21,13 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 {
     public class CatchDifficultyCalculator : DifficultyCalculator
     {
-        // Calibrated after ordering was frozen to preserve the baseline median SR.
-        private const double difficulty_multiplier = 6.07;
-        private const double low_ar_reading_bonus = 0.23;
+        private const double difficulty_multiplier = 4.80;
+        private const double low_ar_reading_bonus = 0.24;
         private const double maximum_reading_bonus = 0.5;
-        private const double star_rating_power = 1.65;
-        private const double star_rating_scale = 0.169024;
+        private const double control_skill_weight = 0.4;
+        private const double dash_state_saturation = 0.05;
 
-        public override int Version => 20260814;
+        public override int Version => 20260815;
 
         public CatchDifficultyCalculator(IRulesetInfo ruleset, IWorkingBeatmap beatmap)
             : base(ruleset, beatmap)
@@ -40,16 +39,25 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             if (beatmap.HitObjects.Count == 0)
                 return new CatchDifficultyAttributes { Mods = mods };
 
+            Movement movement = skills.OfType<Movement>().Single();
+            Control control = skills.OfType<Control>().Single();
             double lowArReading = Math.Sqrt(Math.Max(0, 9.25 - beatmap.Difficulty.ApproachRate));
-            double readingScale = Math.Exp(Math.Min(maximum_reading_bonus, low_ar_reading_bonus * lowArReading));
-            double rawRating = Math.Sqrt(skills.OfType<Movement>().Single().DifficultyValue()) * readingScale * difficulty_multiplier;
+            double readingScale = Math.Exp(Math.Min(
+                maximum_reading_bonus,
+                low_ar_reading_bonus * lowArReading));
+            double combinedDifficulty = movement.DifficultyValue() + control_skill_weight * control.DifficultyValue();
+            double staminaScale = Math.Clamp(
+                Math.Pow(Math.Max(1, movement.ActiveDuration / 1000) / 110, 0.061),
+                0.85,
+                1.15);
+            double sustainedScale = Math.Exp(0.28 * (movement.SustainedStrainRatio - 0.35));
+            double fruitScale = Math.Exp(0.25 * (movement.FruitRatio - 0.9));
+            double dashStateScale = Math.Exp(-dash_state_saturation * movement.DashStateChangeShare);
 
             CatchDifficultyAttributes attributes = new CatchDifficultyAttributes
             {
-                // Timing compression and hyperdash saturation reduce the raw top-end range.
-                // Apply one monotonic display curve so the 5th, median and 95th percentiles remain
-                // in the established SR range without changing any map ordering.
-                StarRating = Math.Pow(rawRating, star_rating_power) * star_rating_scale,
+                StarRating = Math.Sqrt(combinedDifficulty) * difficulty_multiplier
+                             * readingScale * staminaScale * sustainedScale * fruitScale * dashStateScale,
                 Mods = mods,
                 MaxCombo = beatmap.GetMaxCombo(),
             };
@@ -59,8 +67,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 
         protected override IEnumerable<DifficultyHitObject> CreateDifficultyHitObjects(IBeatmap beatmap, Mod[] mods)
         {
-            PalpableCatchHitObject? lastObject = null;
-            var pathObjects = new List<TinyDroplet>();
+            CatchHitObject? lastObject = null;
 
             List<DifficultyHitObject> objects = new List<DifficultyHitObject>(beatmap.HitObjects.Count);
 
@@ -74,24 +81,14 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             // In 2B beatmaps, it is possible that a normal Fruit is placed in the middle of a JuiceStream.
             foreach (var hitObject in CatchBeatmap.GetPalpableObjects(beatmap.HitObjects))
             {
-                if (hitObject is Banana)
+                // We want to only consider fruits that contribute to the combo.
+                if (hitObject is Banana || hitObject is TinyDroplet)
                     continue;
-
-                // Tiny droplets do not receive their own strain peaks, but constrain the slider
-                // path between adjacent combo objects.
-                if (hitObject is TinyDroplet tinyDroplet)
-                {
-                    if (lastObject != null)
-                        pathObjects.Add(tinyDroplet);
-
-                    continue;
-                }
 
                 if (lastObject != null)
-                    objects.Add(new CatchDifficultyHitObject(hitObject, lastObject, clockRate, halfCatcherWidth, objects, objects.Count, pathObjects));
+                    objects.Add(new CatchDifficultyHitObject(hitObject, lastObject, clockRate, halfCatcherWidth, objects, objects.Count));
 
                 lastObject = hitObject;
-                pathObjects.Clear();
             }
 
             return objects;
@@ -102,6 +99,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             return new Skill[]
             {
                 new Movement(mods),
+                new Control(mods),
             };
         }
 

@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using osu.Game.Rulesets.Catch.Objects;
 using osu.Game.Rulesets.Difficulty.Preprocessing;
 using osu.Game.Rulesets.Objects;
@@ -14,8 +13,9 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Preprocessing
     {
         public const float NORMALIZED_HALF_CATCHER_WIDTH = 41.0f;
         private const float absolute_player_positioning_error = 16.0f;
-
-        private const float comfortable_catch_range = NORMALIZED_HALF_CATCHER_WIDTH - absolute_player_positioning_error;
+        // Default CS catch width is 85.4 playfield units, or 42.7 per side.
+        private const float reference_half_catcher_width = 42.7f;
+        private const float playfield_scaling_factor = NORMALIZED_HALF_CATCHER_WIDTH / reference_half_catcher_width;
 
         public new PalpableCatchHitObject BaseObject => (PalpableCatchHitObject)base.BaseObject;
 
@@ -31,7 +31,10 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Preprocessing
         /// </summary>
         public readonly float LastNormalizedPosition;
 
-        private readonly float normalizationOrigin;
+        /// <summary>
+        /// Catchable half-width in the same fixed playfield units as <see cref="NormalizedPosition"/>.
+        /// </summary>
+        public readonly float NormalizedHalfCatcherWidth;
 
         /// <summary>
         /// Normalized position of the player required to catch <see cref="BaseObject"/>, assuming the player moves as little as possible.
@@ -60,130 +63,68 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Preprocessing
         public float ExactDistanceMoved { get; private set; }
 
         /// <summary>
-        /// Total distance which must be travelled through the physical catch intervals between
-        /// <see cref="LastObject"/> and <see cref="BaseObject"/>.
+        /// Minimum physical movement needed to enter the next object's catch interval.
         /// </summary>
-        /// <remarks>
-        /// Unlike <see cref="DistanceMoved"/>, this includes detours required by tiny droplets.
-        /// </remarks>
-        public float TravelDistance { get; private set; }
+        public float PhysicalDistanceMoved { get; private set; }
 
         /// <summary>
-        /// Total distance required when keeping a consistent positioning margin from the edge of
-        /// the catcher's physical catch interval.
+        /// Direction of the minimum physical movement.
         /// </summary>
-        public float ComfortableTravelDistance { get; private set; }
+        public int MovementDirection => Math.Sign(PhysicalDistanceMoved);
 
-        /// <summary>
-        /// Minimum physical travel directly between the two combo objects, without treating tiny
-        /// droplets as mandatory waypoints.
-        /// </summary>
-        public float DirectTravelDistance { get; private set; }
-
-        /// <summary>
-        /// Direct travel required while retaining the comfortable positioning margin.
-        /// </summary>
-        public float DirectComfortableTravelDistance { get; private set; }
-
-        /// <summary>
-        /// Direction of the final required movement in the path ending at <see cref="BaseObject"/>.
-        /// </summary>
-        public int MovementDirection { get; private set; }
-
-        /// <summary>
-        /// Number of tiny droplets which constrain the path from <see cref="LastObject"/> to
-        /// <see cref="BaseObject"/>.
-        /// </summary>
-        public int PathObjectCount { get; }
-
-        private float comfortablePlayerPosition;
+        private float physicalPlayerPosition;
 
         /// <summary>
         /// Milliseconds elapsed since the start time of the previous <see cref="CatchDifficultyHitObject"/>, with a minimum of 40ms.
         /// </summary>
         public readonly double StrainTime;
 
-        public CatchDifficultyHitObject(HitObject hitObject, HitObject lastObject, double clockRate, float halfCatcherWidth, List<DifficultyHitObject> objects, int index,
-                                        IReadOnlyList<TinyDroplet>? pathObjects = null)
+        public CatchDifficultyHitObject(HitObject hitObject, HitObject lastObject, double clockRate, float halfCatcherWidth, List<DifficultyHitObject> objects, int index)
             : base(hitObject, lastObject, clockRate, objects, index)
         {
-            // We will scale everything by this factor, so we can assume a uniform CircleSize among beatmaps.
-            float scalingFactor = NORMALIZED_HALF_CATCHER_WIDTH / halfCatcherWidth;
-
-            // Movement only depends on relative horizontal positions. Anchoring every object to the
-            // first fruit avoids floating-point drift when an otherwise identical pattern is safely
-            // translated across the playfield.
-            normalizationOrigin = Index == 0 ? LastObject.EffectiveX : ((CatchDifficultyHitObject)Previous(0)).normalizationOrigin;
-            NormalizedPosition = (BaseObject.EffectiveX - normalizationOrigin) * scalingFactor;
-            LastNormalizedPosition = (LastObject.EffectiveX - normalizationOrigin) * scalingFactor;
+            // Keep physical travel in fixed playfield units. Circle size changes the interval in
+            // which an object can be caught, but does not change the catcher's movement speed.
+            NormalizedPosition = BaseObject.EffectiveX * playfield_scaling_factor;
+            LastNormalizedPosition = LastObject.EffectiveX * playfield_scaling_factor;
+            NormalizedHalfCatcherWidth = halfCatcherWidth * playfield_scaling_factor;
 
             // Every strain interval is hard capped at the equivalent of 375 BPM streaming speed as a safety measure
             StrainTime = Math.Max(40, DeltaTime);
 
-            PathObjectCount = pathObjects?.Count ?? 0;
-
-            setMovementState(scalingFactor, pathObjects ?? Array.Empty<TinyDroplet>());
+            setMovementState();
         }
 
-        private void setMovementState(float scalingFactor, IReadOnlyList<TinyDroplet> pathObjects)
+        private void setMovementState()
         {
             LastPlayerPosition = Index == 0 ? LastNormalizedPosition : ((CatchDifficultyHitObject)Previous(0)).PlayerPosition;
-            float lastComfortablePlayerPosition = Index == 0 ? LastNormalizedPosition : ((CatchDifficultyHitObject)Previous(0)).comfortablePlayerPosition;
+            float lastPhysicalPlayerPosition = Index == 0
+                ? LastNormalizedPosition
+                : ((CatchDifficultyHitObject)Previous(0)).physicalPlayerPosition;
 
-            float playerPosition = LastPlayerPosition;
-            comfortablePlayerPosition = lastComfortablePlayerPosition;
+            PlayerPosition = Math.Clamp(
+                LastPlayerPosition,
+                NormalizedPosition - Math.Max(0, NormalizedHalfCatcherWidth - absolute_player_positioning_error),
+                NormalizedPosition + Math.Max(0, NormalizedHalfCatcherWidth - absolute_player_positioning_error)
+            );
 
-            int lastMovementDirection = 0;
-            int directMovementDirection = 0;
-            float directPlayerPosition = LastPlayerPosition;
-            float directComfortablePlayerPosition = lastComfortablePlayerPosition;
-
-            DirectTravelDistance = moveToCatchInterval(ref directPlayerPosition, NormalizedPosition, NORMALIZED_HALF_CATCHER_WIDTH, ref directMovementDirection);
-            DirectComfortableTravelDistance = moveToCatchInterval(ref directComfortablePlayerPosition, NormalizedPosition, comfortable_catch_range, ref directMovementDirection);
-
-            // Tiny droplets are lenient score objects, but they describe the path which the catcher
-            // follows between combo objects. Traverse their catch intervals without giving each one
-            // an independent strain peak.
-            if (!LastObject.HyperDash)
-            {
-                foreach (float position in pathObjects.Select(pathObject => (pathObject.EffectiveX - normalizationOrigin) * scalingFactor).Append(NormalizedPosition))
-                {
-                    TravelDistance += moveToCatchInterval(ref playerPosition, position, NORMALIZED_HALF_CATCHER_WIDTH, ref lastMovementDirection);
-                    ComfortableTravelDistance += moveToCatchInterval(ref comfortablePlayerPosition, position, comfortable_catch_range, ref lastMovementDirection);
-                }
-
-                MovementDirection = lastMovementDirection;
-            }
-            else
-            {
-                // Hyperdashes target the next combo object and pass through any tiny droplets along
-                // the way. Measure the movement demand at the target, then use the exact landing
-                // position as the starting state for the following pattern.
-                TravelDistance = DirectTravelDistance;
-                ComfortableTravelDistance = DirectComfortableTravelDistance;
-                MovementDirection = directMovementDirection;
-
-                playerPosition = NormalizedPosition;
-                comfortablePlayerPosition = NormalizedPosition;
-            }
-
-            PlayerPosition = playerPosition;
             DistanceMoved = PlayerPosition - LastPlayerPosition;
 
-            // The exact position is retained for diagnostics and compatibility comparisons.
+            physicalPlayerPosition = Math.Clamp(
+                lastPhysicalPlayerPosition,
+                NormalizedPosition - NormalizedHalfCatcherWidth,
+                NormalizedPosition + NormalizedHalfCatcherWidth
+            );
+            PhysicalDistanceMoved = physicalPlayerPosition - lastPhysicalPlayerPosition;
+
+            // For the exact position we consider that the catcher is in the correct position for both objects
             ExactDistanceMoved = NormalizedPosition - LastPlayerPosition;
-        }
 
-        private static float moveToCatchInterval(ref float playerPosition, float objectPosition, float catchRange, ref int lastMovementDirection)
-        {
-            float nextPlayerPosition = Math.Clamp(playerPosition, objectPosition - catchRange, objectPosition + catchRange);
-            float distance = nextPlayerPosition - playerPosition;
-
-            if (Math.Abs(distance) > 0.1f)
-                lastMovementDirection = Math.Sign(distance);
-
-            playerPosition = nextPlayerPosition;
-            return Math.Abs(distance);
+            // After a hyperdash we ARE in the correct position. Always!
+            if (LastObject.HyperDash)
+            {
+                PlayerPosition = NormalizedPosition;
+                physicalPlayerPosition = NormalizedPosition;
+            }
         }
     }
 }

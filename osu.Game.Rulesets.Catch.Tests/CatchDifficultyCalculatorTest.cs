@@ -14,11 +14,11 @@ namespace osu.Game.Rulesets.Catch.Tests
     {
         protected override string ResourceAssembly => "osu.Game.Rulesets.Catch.Tests";
 
-        [TestCase(5.806808129899642d, 127, "diffcalc-test")]
+        [TestCase(4.259920118592009d, 127, "diffcalc-test")]
         public void Test(double expectedStarRating, int expectedMaxCombo, string name)
             => base.Test(expectedStarRating, expectedMaxCombo, name);
 
-        [TestCase(8.354070378760015d, 127, "diffcalc-test")]
+        [TestCase(5.134981391779896d, 127, "diffcalc-test")]
         public void TestClockRateAdjusted(double expectedStarRating, int expectedMaxCombo, string name)
             => Test(expectedStarRating, expectedMaxCombo, name, new CatchModDoubleTime());
 
