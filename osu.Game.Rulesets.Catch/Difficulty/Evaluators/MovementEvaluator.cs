@@ -14,7 +14,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
         private const double ordinary_direction_change_bonus = 8.0;
         private const double hyperdash_recovery_bonus = 16.0;
         private const double positioning_weight = 0.35;
-        private const double timing_exponent = 0.7;
+        private const double timing_exponent = 0.66;
 
         public static double EvaluateDifficultyOf(DifficultyHitObject current)
         {

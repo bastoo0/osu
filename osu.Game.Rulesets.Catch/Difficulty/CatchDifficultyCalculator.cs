@@ -24,9 +24,9 @@ namespace osu.Game.Rulesets.Catch.Difficulty
         private const double difficulty_multiplier = 5.54;
         private const double low_ar_reading_bonus = 0.04;
         private const double maximum_reading_bonus = 0.12;
-        private const double control_skill_weight = 0.55;
+        private const double control_skill_weight = 0.62;
 
-        public override int Version => 20260818;
+        public override int Version => 20260823;
 
         public CatchDifficultyCalculator(IRulesetInfo ruleset, IWorkingBeatmap beatmap)
             : base(ruleset, beatmap)
@@ -58,11 +58,18 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             // meaningful. This prevents low-strain pattern variety from dominating easy maps.
             double controlScale = Math.Min(1, movementDifficulty);
             double combinedDifficulty = movementDifficulty + control_skill_weight * controlScale * controlDifficulty;
-            double comboScale = Math.Clamp(
-                Math.Pow(Math.Max(1, movement.DifficultyObjectCount) / 1000.0, 0.1),
-                0.9,
-                1.15);
+            // Keep SR length influence modest because performance already rewards length.
+            // Common short maps reach a neutral scale without letting marathon maps dominate.
+            double objectCountScale = Math.Clamp(
+                Math.Pow(Math.Max(1, movement.DifficultyObjectCount) / 650.0, 0.1),
+                0.94,
+                1.08);
             double sustainedScale = Math.Exp(0.28 * (movement.SustainedStrainRatio - 0.35));
+            // The object-level edge-dash bonus represents precise dash release. Once edge dashes
+            // dominate a pattern, that same technique is being repeated rather than introducing
+            // independent difficulty at every object. Leave occasional edge dashes untouched.
+            double repeatedEdgeDashShare = Math.Clamp((movement.EdgeDashRatio - 0.15) / 0.10, 0, 1);
+            double edgeDashScale = 1 - 0.25 * repeatedEdgeDashShare;
             // Droplets can add path and control constraints, so their presence should not reduce
             // movement difficulty. Keep the small bonus for especially fruit-heavy patterns.
             double fruitScale = Math.Exp(0.25 * Math.Max(0, movement.FruitRatio - 0.9));
@@ -70,7 +77,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty
             CatchDifficultyAttributes attributes = new CatchDifficultyAttributes
             {
                 StarRating = Math.Sqrt(combinedDifficulty) * difficulty_multiplier
-                             * readingScale * comboScale * sustainedScale * fruitScale,
+                             * readingScale * objectCountScale * sustainedScale * edgeDashScale * fruitScale,
                 Mods = mods,
                 MaxCombo = beatmap.GetMaxCombo(),
             };

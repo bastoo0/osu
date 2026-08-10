@@ -22,6 +22,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
         private double currentStrain;
         private int objectCount;
         private int hyperDashCount;
+        private int edgeDashCount;
         private int dashStateChangeCount;
         private double activeDuration;
         private int fruitCount;
@@ -33,6 +34,8 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
         public int DifficultyObjectCount => objectCount;
 
         public double FruitRatio => objectCount == 0 ? 0 : (double)fruitCount / objectCount;
+
+        public double EdgeDashRatio => objectCount == 0 ? 0 : (double)edgeDashCount / objectCount;
 
         public double DashStateChangeShare => objectCount <= 1 ? 0 : (double)dashStateChangeCount / (objectCount - 1);
 
@@ -53,6 +56,8 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
                 fruitCount++;
             if (catchCurrent.LastObject.HyperDash)
                 hyperDashCount++;
+            else if (catchCurrent.LastObject.DistanceToHyperDash <= 20)
+                edgeDashCount++;
             if (current.Index >= 1
                 && catchCurrent.LastObject.HyperDash != ((CatchDifficultyHitObject)current.Previous(0)).LastObject.HyperDash)
                 dashStateChangeCount++;
@@ -86,11 +91,11 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
             SustainedStrainRatio = maximumStrain <= 0 ? 0 : sustainedDifficulty / maximumStrain;
             double hyperDashRatio = objectCount == 0 ? 0 : (double)hyperDashCount / objectCount;
 
-            // Repeated forced dashes reuse the same held-dash state most at moderate strain. At
-            // low strain each hyper is the pattern's main demand; at extreme strain speed and
+            // Repeated forced dashes reuse the same held-dash state most in a bounded
+            // moderate-high strain window. Outside it, the pattern's base movement, speed and
             // landing precision remain independently demanding.
             double rawDifficulty = peakDifficulty + sustainedDifficulty;
-            double moderateStrain = Math.Max(0, 1 - Math.Abs(rawDifficulty - 1.6));
+            double moderateStrain = Math.Max(0, 1 - Math.Abs(rawDifficulty - 2.0) / 0.8);
             double effectiveHyperDashSaturation = hyperdash_saturation * (1 + 1.7 * moderateStrain);
             double hyperDashScale = 1 / (1 + effectiveHyperDashSaturation * hyperDashRatio);
 
