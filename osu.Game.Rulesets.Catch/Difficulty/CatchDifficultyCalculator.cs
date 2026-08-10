@@ -21,13 +21,12 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 {
     public class CatchDifficultyCalculator : DifficultyCalculator
     {
-        private const double difficulty_multiplier = 4.80;
-        private const double low_ar_reading_bonus = 0.24;
-        private const double maximum_reading_bonus = 0.5;
-        private const double control_skill_weight = 0.4;
-        private const double dash_state_saturation = 0.05;
+        private const double difficulty_multiplier = 5.64;
+        private const double low_ar_reading_bonus = 0.04;
+        private const double maximum_reading_bonus = 0.12;
+        private const double control_skill_weight = 0.45;
 
-        public override int Version => 20260815;
+        public override int Version => 20260817;
 
         public CatchDifficultyCalculator(IRulesetInfo ruleset, IWorkingBeatmap beatmap)
             : base(ruleset, beatmap)
@@ -41,23 +40,35 @@ namespace osu.Game.Rulesets.Catch.Difficulty
 
             Movement movement = skills.OfType<Movement>().Single();
             Control control = skills.OfType<Control>().Single();
-            double lowArReading = Math.Sqrt(Math.Max(0, 9.25 - beatmap.Difficulty.ApproachRate));
+            double clockRate = ModUtils.CalculateRateWithMods(mods);
+            double preempt = IBeatmapDifficultyInfo.DifficultyRange(
+                beatmap.Difficulty.ApproachRate,
+                CatchHitObject.PREEMPT_RANGE) / clockRate;
+            double effectiveApproachRate = IBeatmapDifficultyInfo.InverseDifficultyRange(
+                preempt,
+                CatchHitObject.PREEMPT_RANGE);
+            double lowArReading = Math.Sqrt(Math.Max(0, 9.25 - effectiveApproachRate));
             double readingScale = Math.Exp(Math.Min(
                 maximum_reading_bonus,
                 low_ar_reading_bonus * lowArReading));
-            double combinedDifficulty = movement.DifficultyValue() + control_skill_weight * control.DifficultyValue();
-            double staminaScale = Math.Clamp(
-                Math.Pow(Math.Max(1, movement.ActiveDuration / 1000) / 110, 0.061),
-                0.85,
-                1.15);
+            double movementDifficulty = movement.DifficultyValue();
+            double controlDifficulty = control.DifficultyValue();
+
+            // Timing and spacing changes only become difficult when the underlying movement is
+            // meaningful. This prevents low-strain pattern variety from dominating easy maps.
+            double controlScale = Math.Min(1, movementDifficulty);
+            double combinedDifficulty = movementDifficulty + control_skill_weight * controlScale * controlDifficulty;
+            double comboScale = Math.Clamp(
+                Math.Pow(Math.Max(1, movement.DifficultyObjectCount) / 1000.0, 0.1),
+                0.9,
+                1.08);
             double sustainedScale = Math.Exp(0.28 * (movement.SustainedStrainRatio - 0.35));
             double fruitScale = Math.Exp(0.25 * (movement.FruitRatio - 0.9));
-            double dashStateScale = Math.Exp(-dash_state_saturation * movement.DashStateChangeShare);
 
             CatchDifficultyAttributes attributes = new CatchDifficultyAttributes
             {
                 StarRating = Math.Sqrt(combinedDifficulty) * difficulty_multiplier
-                             * readingScale * staminaScale * sustainedScale * fruitScale * dashStateScale,
+                             * readingScale * comboScale * sustainedScale * fruitScale,
                 Mods = mods,
                 MaxCombo = beatmap.GetMaxCombo(),
             };

@@ -9,8 +9,6 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
 {
     public static class ControlEvaluator
     {
-        private const double rhythm_change_weight = 2.0;
-
         public static double EvaluateDifficultyOf(DifficultyHitObject current)
         {
             if (current.Index < 1)
@@ -18,12 +16,24 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Evaluators
 
             var catchCurrent = (CatchDifficultyHitObject)current;
             var previous = (CatchDifficultyHitObject)current.Previous(0);
-            double controlDemand = 0;
+
+            // A forced hyperdash is already represented by movement strain. Technical control is
+            // the need to retime or resize ordinary movement without changing to a forced state.
+            if (catchCurrent.LastObject.HyperDash || previous.LastObject.HyperDash)
+                return 0;
 
             double rhythmRatio = Math.Max(catchCurrent.StrainTime, previous.StrainTime)
                                  / Math.Min(catchCurrent.StrainTime, previous.StrainTime);
-            if (rhythmRatio > 1.25)
-                controlDemand += rhythm_change_weight * Math.Min(1, (rhythmRatio - 1.25) / 0.75);
+            double rhythmChange = Math.Min(1, Math.Abs(Math.Log(rhythmRatio, 2)));
+
+            double currentSpeed = Math.Abs(catchCurrent.PhysicalDistanceMoved) / catchCurrent.StrainTime;
+            double previousSpeed = Math.Abs(previous.PhysicalDistanceMoved) / previous.StrainTime;
+            double maximumSpeed = Math.Max(currentSpeed, previousSpeed);
+            double speedChange = maximumSpeed <= 0.001
+                ? 0
+                : Math.Min(1, Math.Abs(currentSpeed - previousSpeed) / maximumSpeed);
+
+            double controlDemand = Math.Max(rhythmChange, speedChange);
 
             return MovementEvaluator.EvaluateDifficultyOf(current) * controlDemand;
         }

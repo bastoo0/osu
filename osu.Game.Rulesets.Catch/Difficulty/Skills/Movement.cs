@@ -17,7 +17,7 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
     public class Movement : VariableLengthStrainSkill
     {
         private const double strain_decay_base = 0.2;
-        private const double hyperdash_saturation = 1.1;
+        private const double hyperdash_saturation = 0.3;
 
         private double currentStrain;
         private int objectCount;
@@ -29,6 +29,8 @@ namespace osu.Game.Rulesets.Catch.Difficulty.Skills
         public double ActiveObjectRate => activeDuration <= 0 ? 0 : objectCount * 1000 / activeDuration;
 
         public double ActiveDuration => activeDuration;
+
+        public int DifficultyObjectCount => objectCount;
 
         public double FruitRatio => objectCount == 0 ? 0 : (double)fruitCount / objectCount;
 
